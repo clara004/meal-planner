@@ -1,6 +1,5 @@
 const connectDB = require('./db/connection');
-require('dotenv').config();
-
+const routes = require('./routes');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -9,6 +8,7 @@ const app = express();
 connectDB();
 app.use(cors());
 app.use(express.json());
+app.use('/api',routes);
 
 app.get('/', (req, res) => res.status(200).json({ message: 'MealPlanner API running' }));
 
