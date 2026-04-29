@@ -1,8 +1,17 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import AuthPage from './pages/AuthPage';
+import Dashboard from './pages/Dashboard';
+
 function App() {
   return (
-    <div>
-      <h1>RecipePlanner</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/home" element={<Home />} />
+        { <Route path="/login" element={<AuthPage />} /> }
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
