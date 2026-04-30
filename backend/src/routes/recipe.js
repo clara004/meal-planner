@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const Recipe = require('../models/Recipe');
 
-// 🔧 helper function (reuse logic)
+//helper function (reuse logic)
 const calculateNutrition = (ingredients, servings) => {
   let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
 
@@ -32,7 +32,7 @@ const calculateNutrition = (ingredients, servings) => {
 
 
 
-// ✅ Create Recipe
+//Create Recipe
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { ingredients = [], servings } = req.body;
@@ -56,7 +56,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
 
 
-// ✅ Get all recipes (with search & filter)
+//Get all recipes (with search & filter)
 router.get('/', async (req, res) => {
   try {
     const { search, cuisine, maxCalories } = req.query;
@@ -86,7 +86,7 @@ router.get('/', async (req, res) => {
 
 
 
-// ✅ Get single recipe
+//Get single recipe
 router.get('/:id', async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -104,7 +104,7 @@ router.get('/:id', async (req, res) => {
 
 
 
-// ✅ Update recipe (recalculate nutrition)
+//Update recipe (recalculate nutrition)
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -139,7 +139,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 
 
 
-// ✅ Delete recipe
+//Delete recipe
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);

@@ -39,14 +39,14 @@ const recipeSchema = new mongoose.Schema({
 
   steps: [String],
 
-  // 🔥 REQUIRED FOR FR-03
+  //Calculating total nutrition
   totalNutrition: {
     calories: { type: Number, default: 0 },
     protein: { type: Number, default: 0 },
     carbs: { type: Number, default: 0 },
     fat: { type: Number, default: 0 }
   },
-
+  // The meal served l kam person ?
   perServing: {
     calories: { type: Number, default: 0 },
     protein: { type: Number, default: 0 },

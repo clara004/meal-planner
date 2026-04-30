@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const Meal = require('../models/Meal');
 
-// CREATE MEAL
+// Create meal
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { name, description, ingredients, calories } = req.body;
@@ -21,7 +21,7 @@ router.post('/', authMiddleware, async (req, res) => {
   }
 });
 
-//Get All Meals
+//Get all the meals 
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const meals = await Meal.find({ user: req.user.id }); // only this user's meals
@@ -32,7 +32,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 
-// UPDATE MEAL
+//Update meal 
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const meal = await Meal.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -42,7 +42,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE MEAL
+//Delete meal
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     await Meal.findByIdAndDelete(req.params.id);
