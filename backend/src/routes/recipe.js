@@ -31,15 +31,8 @@ const calculateNutrition = (ingredients, servings) => {
   };
 };
 
-<<<<<<< Updated upstream
-
-
-//Create Recipe
-router.post('/', authMiddleware, async (req, res) => {
-=======
 // ✅ Create Recipe
 router.post('/', authMiddleware, recipeRules, validate, async (req, res) => {
->>>>>>> Stashed changes
   try {
     const { ingredients = [], servings } = req.body;
 
@@ -60,13 +53,7 @@ router.post('/', authMiddleware, recipeRules, validate, async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
-
-
-//Get all recipes (with search & filter)
-=======
 // ✅ Get all recipes (with search & filter)
->>>>>>> Stashed changes
 router.get('/', async (req, res) => {
   try {
     const { search, cuisine, maxCalories, dietaryTag, minRating, sortBy } = req.query;
@@ -125,13 +112,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
-
-
-//Get single recipe
-=======
 // ✅ Get single recipe
->>>>>>> Stashed changes
 router.get('/:id', async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -147,13 +128,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
-
-
-//Update recipe (recalculate nutrition)
-=======
 // ✅ Update recipe (recalculate nutrition)
->>>>>>> Stashed changes
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -186,13 +161,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
-
-
-//Delete recipe
-=======
 // ✅ Delete recipe
->>>>>>> Stashed changes
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
