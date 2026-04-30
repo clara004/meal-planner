@@ -40,14 +40,30 @@ const Home = () => {
       {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
         <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          <div className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend']">Vitality Kitchen</div>
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-            <a className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1" href="#">Home</a>
-            <a className="text-stone-500 font-medium hover:text-[#0f5238] transition-all" href="#">Meal Plans</a>
-            <a className="text-stone-500 font-medium hover:text-[#0f5238] transition-all" href="#">Recipes</a>
-            <a className="text-stone-500 font-medium hover:text-[#0f5238] transition-all" href="#">Grocery List</a>
-            <a className="text-stone-500 font-medium hover:text-[#0f5238] transition-all" href="#">Community</a>
+          {/* Logo - Click to go Home */}
+          <div 
+            onClick={() => navigate('/')} 
+            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
+          >
+            Vitality Kitchen
           </div>
+          
+          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+            <button onClick={() => navigate('/')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Home</button>
+            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Plans</button>
+            
+            {/* Recipes Nav Link */}
+            <button 
+              onClick={() => navigate('/recipes')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Recipes
+            </button>
+            
+            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
+            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Community</button>
+          </div>
+
           <div className="flex items-center gap-6">
             <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
             <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all">Get Started</button>
@@ -65,7 +81,6 @@ const Home = () => {
                 <span className="tracking-widest uppercase text-[10px] font-bold">Your Journey to Better Health</span>
               </div>
               
-              {/* BIG BOLD TITLE (64px / 800 weight) */}
               <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] max-w-4xl tracking-tighter leading-[1.1]">
                 Fuel Your Vitality with <span className="text-[#0f5238] italic">Every Bite</span>
               </h1>
@@ -75,10 +90,15 @@ const Home = () => {
               </p>
 
               <div className="flex flex-wrap justify-center gap-6 pt-4">
-                <button className="pill-button px-10 py-4 bg-[#0f5238] text-white font-[800] text-lg shadow-2xl hover:translate-y-[-4px] transition-all">
+                <button onClick={() => navigate('/login')} className="pill-button px-10 py-4 bg-[#0f5238] text-white font-[800] text-lg shadow-2xl hover:translate-y-[-4px] transition-all">
                   Start Your Journey
                 </button>
-                <button className="pill-button px-10 py-4 border-2 border-[#0f5238]/20 text-[#0f5238] font-bold text-lg hover:bg-[#0f5238]/5 transition-all">
+                
+                {/* Explore Recipes Button */}
+                <button 
+                  onClick={() => navigate('/recipes')} 
+                  className="pill-button px-10 py-4 border-2 border-[#0f5238]/20 text-[#0f5238] font-bold text-lg hover:bg-[#0f5238]/5 transition-all"
+                >
                   Explore Recipes
                 </button>
               </div>
@@ -94,7 +114,7 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Image Collage - Exact original links and dimensions */}
+          {/* Image Collage */}
           <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] px-6 lg:px-12 py-10">
             <div className="grid grid-cols-12 grid-rows-2 gap-6 h-[600px] lg:h-[800px]">
               <div className="col-span-12 lg:col-span-6 row-span-2 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
@@ -123,7 +143,6 @@ const Home = () => {
                 <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto group-hover:bg-[#0f5238] transition-colors">
                   <span className="material-symbols-outlined text-[#0f5238] text-3xl group-hover:text-white">{f.icon}</span>
                 </div>
-                {/* SUBTITLE (24px / 600 weight) */}
                 <h3 className="font-['Lexend'] text-[24px] font-[600] text-[#064e3b]">{f.title}</h3>
                 <p className="text-stone-500 text-sm max-w-[160px] mx-auto leading-relaxed">{f.desc}</p>
               </div>
@@ -134,7 +153,6 @@ const Home = () => {
         {/* Reviews Section */}
         <section className="max-w-4xl mx-auto px-6 py-32">
           <div className="text-center mb-20 space-y-6 reveal">
-            {/* BIG BOLD TITLE (64px) */}
             <h2 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] leading-[1.1] tracking-tighter">What Our Community Says</h2>
             <div className="w-24 h-1.5 bg-[#fd9d1a] mx-auto rounded-full"></div>
           </div>
@@ -165,7 +183,6 @@ const Home = () => {
         {/* CTA Section */}
         <section className="max-w-7xl mx-auto px-6 pb-32 reveal">
           <div className="relative bg-[#2d6a4f] rounded-[3rem] p-16 md:p-24 overflow-hidden shadow-2xl text-center space-y-10">
-            {/* BIG BOLD TITLE (64px) */}
             <h2 className="font-['Lexend'] text-3xl md:text-[64px] font-[800] text-white leading-[1.1] tracking-tighter">Ready to transform your relationship with food?</h2>
             <button onClick={() => navigate('/login')} className="pill-button px-14 py-5 bg-white text-[#0f5238] font-[800] text-xl shadow-2xl hover:scale-105 transition-all">
               Get Started For Free
@@ -174,19 +191,19 @@ const Home = () => {
         </section>
       </main>
 
-      {/* Footer - Complete with all Links */}
+      {/* Footer */}
       <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
-            <div className="text-2xl font-[800] text-[#064e3b] tracking-tight">Vitality Kitchen</div>
+            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] tracking-tight cursor-pointer">Vitality Kitchen</div>
             <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2024 Vitality Kitchen.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-10">
-            <a className="text-stone-600 font-medium hover:text-[#0f5238]" href="#">About Us</a>
-            <a className="text-stone-600 font-medium hover:text-[#0f5238]" href="#">Privacy Policy</a>
-            <a className="text-stone-600 font-medium hover:text-[#0f5238]" href="#">Terms of Service</a>
-            <a className="text-stone-600 font-medium hover:text-[#0f5238]" href="#">Contact</a>
-            <a className="text-stone-600 font-medium hover:text-[#0f5238]" href="#">FAQ</a>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">FAQ</button>
           </div>
           <div className="flex gap-4">
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 hover:bg-[#0f5238] hover:text-white shadow-sm transition-all cursor-pointer">
