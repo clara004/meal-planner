@@ -1,17 +1,32 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import Recipes from './pages/Recipes'; 
+import RecipeDetail from './pages/RecipeDetail';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/home" element={<Home />} />
-        { <Route path="/login" element={<AuthPage />} /> }
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Landing Page */}
+        <Route path="/" element={<Home />} />
+        
+        {/* Login/Register Page */}
+        <Route path="/login" element={<AuthPage />} />
+
+        {/* The Recipes Gallery Page */}
+        <Route path="/recipes" element={<Recipes />} />
+
+        {/* ── THE MISSING PIECE ──────────────────────────────────── */}
+        {/* This ":id" tells React to catch any recipe name in the URL 
+            and send it to the RecipeDetail file */}
+        <Route path="/recipes/:id" element={<RecipeDetail />} />
+        {/* ──────────────────────────────────────────────────────── */}
+
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<div>Dashboard Coming Soon...</div>} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 
