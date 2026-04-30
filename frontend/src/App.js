@@ -1,17 +1,21 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/home" element={<Home />} />
-        { <Route path="/login" element={<AuthPage />} /> }
-        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Landing Page */}
+        <Route path="/" element={<Home />} />
+        
+        {/* Login/Register Page */}
+        <Route path="/login" element={<AuthPage />} />
+        
+        {/* You can add your dashboard here later */}
+        <Route path="/dashboard" element={<div>Dashboard Coming Soon...</div>} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 
