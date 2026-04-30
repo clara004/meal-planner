@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import api from "../utils/api";
+import { useNavigate } from "react-router-dom";
 
 // ── Validation Schemas ────────────────────────────────────────────────────────
 const loginSchema = Yup.object({
@@ -279,11 +280,13 @@ function RegisterForm({ onSuccess }) {
 
 // ── Main Auth Page ────────────────────────────────────────────────────────────
 export default function AuthPage() {
+   const navigate = useNavigate(); 
   const [tab, setTab] = useState("login"); // "login" | "register"
 
   const handleSuccess = (user) => {
     // redirect to dashboard after successful auth
-    window.location.href = "/dashboard";
+    //window.location.href = "/dashboard";
+    navigate("/");
   };
 
   return (
