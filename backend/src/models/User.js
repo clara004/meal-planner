@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
     password : {
         type:String,
         required:true
+    },
+    calorieGoal : {
+        type: Number, 
+        default: 2000
     }
 });
 module.exports = mongoose.model('User',userSchema);
