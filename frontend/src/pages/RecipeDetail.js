@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react'; // Added useState
 import { useParams, useNavigate } from 'react-router-dom';
 import { recipesData } from '../data/recipesData';
 
 const RecipeDetail = () => {
-  const { id } = useParams(); // Looks at the URL for the recipe name
+  const { id } = useParams(); 
   const navigate = useNavigate();
   
-  // Find the right recipe data based on the URL ID
+  // ── STATE FOR INTERACTIVE RATING ────────────────────────────────────────────
+  const [userRating, setUserRating] = useState(0);
+
   const recipe = recipesData.find(r => r.id === id);
 
   useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to top when page opens
+    window.scrollTo(0, 0);
   }, []);
 
   if (!recipe) {
@@ -43,11 +45,36 @@ const RecipeDetail = () => {
 
         {/* Hero Section */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] lg:h-auto">
-            <img src={recipe.img} alt={recipe.title} className="w-full h-full object-cover" />
-            <div className="absolute top-6 left-6 flex gap-2">
-              <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm">TOP RATED</span>
-              <span className="bg-[#0f5238]/90 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm">{recipe.category.toUpperCase()}</span>
+          <div>
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] lg:h-auto">
+              <img src={recipe.img} alt={recipe.title} className="w-full h-full object-cover" />
+              <div className="absolute top-6 left-6 flex gap-2">
+                <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm">TOP RATED</span>
+                <span className="bg-[#0f5238]/90 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm">{recipe.category.toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* ── 5 STAR RATING OPTION ADDED HERE ── */}
+            <div className="mt-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-50 flex flex-col items-center lg:items-start">
+              <p className="text-[10px] font-[800] text-gray-400 uppercase tracking-widest mb-2">Rate this recipe</p>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    onClick={() => setUserRating(star)}
+                    className="material-symbols-outlined cursor-pointer text-4xl transition-all duration-200 hover:scale-110"
+                    style={{
+                      fontVariationSettings: `'FILL' ${userRating >= star ? 1 : 0}`,
+                      color: userRating >= star ? '#fd9d1a' : '#bfc9c1'
+                    }}
+                  >
+                    star
+                  </span>
+                ))}
+              </div>
+              {userRating > 0 && (
+                <p className="text-xs font-bold text-[#0f5238] mt-2">You rated this {userRating} stars!</p>
+              )}
             </div>
           </div>
 

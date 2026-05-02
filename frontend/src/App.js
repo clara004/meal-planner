@@ -3,6 +3,7 @@ import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
 import Recipes from './pages/Recipes'; 
 import RecipeDetail from './pages/RecipeDetail';
+import CreateRecipe from './pages/CreateRecipe'; 
 
 function App() {
   return (
@@ -17,7 +18,8 @@ function App() {
         {/* The Recipes Gallery Page */}
         <Route path="/recipes" element={<Recipes />} />
 
-        {/* ── THE MISSING PIECE ──────────────────────────────────── */}
+         {/* The Create Recipe page*/}
+        <Route path="/create-recipe" element={<CreateRecipe />} />   
         {/* This ":id" tells React to catch any recipe name in the URL 
             and send it to the RecipeDetail file */}
         <Route path="/recipes/:id" element={<RecipeDetail />} />

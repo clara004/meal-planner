@@ -280,12 +280,10 @@ function RegisterForm({ onSuccess }) {
 
 // ── Main Auth Page ────────────────────────────────────────────────────────────
 export default function AuthPage() {
-   const navigate = useNavigate(); 
-  const [tab, setTab] = useState("login"); // "login" | "register"
+  const navigate = useNavigate(); 
+  const [tab, setTab] = useState("login"); 
 
   const handleSuccess = (user) => {
-    // redirect to dashboard after successful auth
-    //window.location.href = "/dashboard";
     navigate("/");
   };
 
@@ -298,7 +296,7 @@ export default function AuthPage() {
       <style>{`
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
         input, select { font-family: 'Plus Jakarta Sans', sans-serif; }
         input::placeholder { color: #aab0ac; }
         input:focus, select:focus { outline: none; border: 2px solid #2d6a4f !important; background: #ffffff !important; }
@@ -315,10 +313,10 @@ export default function AuthPage() {
 
       <main style={{ display: "flex", minHeight: "100vh", width: "100%", background: "#f8f9fa" }}>
 
-        {/* ── Image Side ── */}
+        {/* ── Image Side (FIXED: Sticky positioning prevents zoom dramatic zoom) ── */}
         <section className="auth-image-side" style={{
-          width: "50%", position: "relative", overflow: "hidden",
-          background: "#0f5238", display: "flex",
+          width: "50%", position: "sticky", top: 0, height: "100vh",
+          overflow: "hidden", background: "#0f5238", display: "flex",
         }}>
           <div style={{
             position: "absolute", inset: 0, backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4R4tCU3Bfo7lHOLaHmmTqBc4Z7mrh00MoAX_bvA6f8LtQ3CUECRzuKZppybX1j2qUDbwxIFHbEYZwjKoQEqwsUvK9NCdF9JNLo9hO_YbOMW7tIe3O95yTnPETXAuZncX2OHUfPtwjXDj5G1dEyozNxkJRAXlvGiN0r6LJ5zeE3-HvJV6wFuRSBtCrI5sTrfJEygFz5gXVQ1NMtZ96E38c2x0w7C1MAIb0QbJzA-I0gXNSRKlJiacRRGOSqD-GTdcwauhTsotTmmmE")`,
@@ -351,8 +349,8 @@ export default function AuthPage() {
 
         {/* ── Form Side ── */}
         <section className="auth-form-side" style={{
-          width: "50%", display: "flex", alignItems: "center", justifyContent: "center",
-          background: "#ffffff", padding: "48px 32px",
+          width: "50%", display: "flex", alignItems: "flex-start", justifyContent: "center",
+          background: "#ffffff", padding: "80px 32px",
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d6a4f' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         }}>
           <div style={{ width: "100%", maxWidth: "440px", display: "flex", flexDirection: "column", gap: "28px" }}>
@@ -412,7 +410,7 @@ export default function AuthPage() {
               <div style={{ flex: 1, height: "1px", background: "#e1e3e4" }} />
             </div>
 
-            {/* Social buttons (visual only — out of scope) */}
+            {/* Social buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {[
                 { label: "Google", icon: <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> },
