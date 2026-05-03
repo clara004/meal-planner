@@ -1,15 +1,43 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({ calorieGoal: '—', mealsPlanned: '—', recipesSaved: '—' });
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
-    if (!stored) { navigate('/login'); return; }
-    setUser(JSON.parse(stored));
+    if (!stored || stored === 'undefined') { navigate('/login'); return; }
+    try {
+      const parsedUser = JSON.parse(stored);
+      setUser(parsedUser);
+      fetchStats(parsedUser);
+    } catch {
+      navigate('/login');
+    }
   }, [navigate]);
+
+  const fetchStats = async (parsedUser) => {
+    try {
+      const [mealsRes, recipesRes] = await Promise.all([
+        api.get('/mealplan'),
+        api.get('/recipes'),
+      ]);
+      setStats({
+        calorieGoal: parsedUser.calorie_goal ? `${parsedUser.calorie_goal} kcal` : '2,000 kcal',
+        mealsPlanned: `${mealsRes.data?.mealPlans?.length ?? 0} meals`,
+        recipesSaved: `${recipesRes.data?.recipes?.length ?? 0} recipes`,
+      });
+    } catch {
+      setStats({
+        calorieGoal: parsedUser.calorie_goal ? `${parsedUser.calorie_goal} kcal` : '2,000 kcal',
+        mealsPlanned: '0 meals',
+        recipesSaved: '0 recipes',
+      });
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -37,9 +65,9 @@ function Dashboard() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
           {[
-            { label: 'Daily Calories', value: '2,000 kcal', icon: '🔥' },
-            { label: 'Meals Planned', value: '3 meals', icon: '🥗' },
-            { label: 'Recipes Saved', value: '12 recipes', icon: '📖' },
+            { label: 'Daily Calories', value: stats.calorieGoal, icon: '🔥' },
+            { label: 'Meals Planned', value: stats.mealsPlanned, icon: '🥗' },
+            { label: 'Recipes Saved', value: stats.recipesSaved, icon: '📖' },
           ].map(({ label, value, icon }) => (
             <div key={label} style={{ background: 'white', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>{icon}</div>
