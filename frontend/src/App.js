@@ -1,39 +1,29 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
-import Recipes from './pages/Recipes'; 
+import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
-import GroceryList from "./pages/GroceryList";
-import MealPlanner from './pages/MealPlanner';
-import Profile from './pages/Profile';
+import Dashboard from './pages/Dashboard';
+
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+  if (!token) return <Navigate to="/login" />;
+  return children;
+}
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Landing Page */}
         <Route path="/" element={<Home />} />
-        
-        {/* Login/Register Page */}
         <Route path="/login" element={<AuthPage />} />
-
-        {/* The Recipes Gallery Page */}
         <Route path="/recipes" element={<Recipes />} />
-
-        {/* ── THE MISSING PIECE ──────────────────────────────────── */}
-        {/* This ":id" tells React to catch any recipe name in the URL 
-            and send it to the RecipeDetail file */}
         <Route path="/recipes/:id" element={<RecipeDetail />} />
-        {/* ──────────────────────────────────────────────────────── */}
-
-        <Route path="/grocery" element={<GroceryList />} />
-
-        <Route path="/meal-planner" element={<MealPlanner />} />
-
-        <Route path="/profile" element={<Profile />} />
-
-        {/* Dashboard */}
-        <Route path="/dashboard" element={<div>Dashboard Coming Soon...</div>} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   );
