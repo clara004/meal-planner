@@ -3,6 +3,9 @@ import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
 import Recipes from './pages/Recipes'; 
 import RecipeDetail from './pages/RecipeDetail';
+import GroceryList from "./pages/GroceryList";
+import MealPlanner from './pages/MealPlanner';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -22,6 +25,12 @@ function App() {
             and send it to the RecipeDetail file */}
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         {/* ──────────────────────────────────────────────────────── */}
+
+        <Route path="/grocery" element={<GroceryList />} />
+
+        <Route path="/meal-planner" element={<MealPlanner />} />
+
+        <Route path="/profile" element={<Profile />} />
 
         {/* Dashboard */}
         <Route path="/dashboard" element={<div>Dashboard Coming Soon...</div>} />
