@@ -50,8 +50,6 @@ const Home = () => {
           
           <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
             <button onClick={() => navigate('/')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Home</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Plans</button>
-            
             {/* Recipes Nav Link */}
             <button 
               onClick={() => navigate('/recipes')} 
@@ -59,9 +57,18 @@ const Home = () => {
             >
               Recipes
             </button>
-            
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Community</button>
+            <button 
+              onClick={() => navigate('/meal-planner')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Meal Planner
+            </button>
+            <button 
+              onClick={() => navigate('/grocery')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Grocery List
+            </button>
           </div>
 
           <div className="flex items-center gap-6">

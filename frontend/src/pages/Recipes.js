@@ -34,19 +34,66 @@ const Recipes = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100 shadow-sm">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-5">
-          <div onClick={() => navigate('/')} className="text-[24px] font-[800] text-[#0f5238] font-['Lexend'] cursor-pointer">Vitality Kitchen</div>
-          <div className="hidden md:flex gap-10 font-['Lexend'] text-[14px]">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium">Home</button>
-            <button onClick={() => navigate('/recipes')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238]">Recipes</button>
-            <button className="text-stone-500 font-medium">Meal Plan</button>
-            <button className="text-stone-500 font-medium">Grocery List</button>
-          </div>
-          <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-6 py-2 pill-button font-bold text-sm">Login</button>
-        </nav>
-      </header>
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
+  <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+    
+    {/* Logo */}
+    <div 
+      onClick={() => navigate('/')} 
+      className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
+    >
+      Vitality Kitchen
+    </div>
+
+    {/* Navigation */}
+    <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+      
+      <button 
+        onClick={() => navigate('/')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+      >
+        Home
+      </button>
+
+      <button 
+        onClick={() => navigate('/recipes')} 
+        className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
+      >
+        Recipes
+      </button>
+
+      <button 
+        onClick={() => navigate('/meal-planner')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+      >
+        Meal Planner
+      </button>
+
+      <button 
+        onClick={() => navigate('/grocery')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">
+        Grocery List
+      </button>
+    </div>
+
+    {/* Actions */}
+    <div className="flex items-center gap-6">
+      <button 
+        onClick={() => navigate('/login')} 
+        className="text-stone-600 font-bold text-sm"
+      >
+        Login
+      </button>
+
+      <button 
+        onClick={() => navigate('/login')} 
+        className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all"
+      >
+        Get Started
+      </button>
+    </div>
+  </nav>
+</header>
 
       <main className="flex-grow pt-32 pb-24 px-6 max-w-7xl mx-auto w-full">
         {/* HERO - LARGE TITLES */}

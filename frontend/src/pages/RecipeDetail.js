@@ -25,12 +25,67 @@ const RecipeDetail = () => {
       `}</style>
 
       {/* Nav */}
-      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-16 flex items-center px-6">
-        <div className="max-w-[1280px] mx-auto w-full flex justify-between items-center">
-          <span className="text-2xl font-bold text-emerald-800 cursor-pointer" onClick={() => navigate('/')}>FreshTable</span>
-          <span className="material-symbols-outlined text-emerald-800 cursor-pointer">account_circle</span>
-        </div>
-      </nav>
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
+  <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+    
+    {/* Logo */}
+    <div 
+      onClick={() => navigate('/')} 
+      className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
+    >
+      Vitality Kitchen
+    </div>
+
+    {/* Navigation */}
+    <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+      
+      <button 
+        onClick={() => navigate('/')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+      >
+        Home
+      </button>
+
+      <button 
+        onClick={() => navigate('/recipes')} 
+        className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
+      >
+        Recipes
+      </button>
+
+      <button 
+        onClick={() => navigate('/meal-planner')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+      >
+        Meal Planner
+      </button>
+
+      <button 
+        onClick={() => navigate('/grocery')} 
+        className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+      >
+        Grocery List
+      </button>
+    </div>
+
+    {/* Actions */}
+    <div className="flex items-center gap-6">
+      <button 
+        onClick={() => navigate('/login')} 
+        className="text-stone-600 font-bold text-sm"
+      >
+        Login
+      </button>
+
+      <button 
+        onClick={() => navigate('/login')} 
+        className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all"
+      >
+        Get Started
+      </button>
+    </div>
+  </nav>
+</header>
 
       <main className="pt-24 pb-20 max-w-[1280px] mx-auto px-6">
         {/* Back Button */}
