@@ -5,6 +5,7 @@ import api from '../utils/api';
 const RecipeDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [userRating, setUserRating] = useState(0);
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +24,7 @@ const RecipeDetail = () => {
     fetchRecipe();
   }, [id]);
 
-  if (loading) return <div className="pt-40 text-center text-gray-500">Loading recipe...</div>;
+  if (loading) return <div className="pt-40 text-center text-gray-400">Loading recipe...</div>;
   if (!recipe) return <div className="pt-40 text-center">Recipe not found.</div>;
 
   return (
@@ -41,23 +42,36 @@ const RecipeDetail = () => {
       </nav>
 
       <main className="pt-24 pb-20 max-w-[1280px] mx-auto px-6">
-        <button
-          onClick={() => navigate('/recipes')}
-          className="flex items-center gap-2 text-[#0f5238] font-bold mb-8 hover:bg-[#b1f0ce] px-4 py-2 rounded-full transition-all"
-        >
+        <button onClick={() => navigate('/recipes')}
+          className="flex items-center gap-2 text-[#0f5238] font-bold mb-8 hover:bg-[#b1f0ce] px-4 py-2 rounded-full transition-all">
           <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Recipes
         </button>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] lg:h-auto">
-            {recipe.image && (
-              <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
-            )}
-            <div className="absolute top-6 left-6 flex gap-2">
-              <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm">TOP RATED</span>
-              {recipe.category && (
-                <span className="bg-[#0f5238]/90 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm">{recipe.category.toUpperCase()}</span>
-              )}
+          <div>
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] lg:h-auto">
+              {recipe.image
+                ? <img src={recipe.image} alt={recipe.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
+              }
+              <div className="absolute top-6 left-6 flex gap-2">
+                <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm">TOP RATED</span>
+                {recipe.category && <span className="bg-[#0f5238]/90 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm">{recipe.category.toUpperCase()}</span>}
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-white rounded-2xl shadow-sm border border-gray-50 flex flex-col items-center lg:items-start">
+              <p className="text-[10px] font-[800] text-gray-400 uppercase tracking-widest mb-2">Rate this recipe</p>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span key={star} onClick={() => setUserRating(star)}
+                    className="material-symbols-outlined cursor-pointer text-4xl transition-all duration-200 hover:scale-110"
+                    style={{ fontVariationSettings: `'FILL' ${userRating >= star ? 1 : 0}`, color: userRating >= star ? '#fd9d1a' : '#bfc9c1' }}>
+                    star
+                  </span>
+                ))}
+              </div>
+              {userRating > 0 && <p className="text-xs font-bold text-[#0f5238] mt-2">You rated this {userRating} stars!</p>}
             </div>
           </div>
 
@@ -69,12 +83,12 @@ const RecipeDetail = () => {
               <div className="bg-white p-4 rounded-2xl text-center shadow-sm">
                 <span className="material-symbols-outlined text-[#0f5238]">schedule</span>
                 <p className="text-xs text-gray-400 font-bold">TIME</p>
-                <p className="font-bold">{recipe.prepTime || '—'}</p>
+                <p className="font-bold">{recipe.prepTime ? `${recipe.prepTime} min` : '—'}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl text-center shadow-sm">
                 <span className="material-symbols-outlined text-[#0f5238]">local_fire_department</span>
                 <p className="text-xs text-gray-400 font-bold">CALORIES</p>
-                <p className="font-bold">{recipe.perServing?.calories ?? recipe.totalNutrition?.calories ?? '—'}</p>
+                <p className="font-bold">{recipe.perServing?.calories ?? '—'}</p>
               </div>
               <div className="bg-white p-4 rounded-2xl text-center shadow-sm">
                 <span className="material-symbols-outlined text-[#0f5238]">restaurant</span>
@@ -91,9 +105,9 @@ const RecipeDetail = () => {
                 <div className="bg-[#57624e]" style={{ width: '33%' }}></div>
               </div>
               <div className="flex justify-between text-xs font-bold">
-                <p>Protein: {recipe.perServing?.protein ?? recipe.totalNutrition?.protein ?? '—'}g</p>
-                <p>Carbs: {recipe.perServing?.carbs ?? recipe.totalNutrition?.carbs ?? '—'}g</p>
-                <p>Fats: {recipe.perServing?.fat ?? recipe.totalNutrition?.fat ?? '—'}g</p>
+                <p>Protein: {recipe.perServing?.protein ?? '—'}g</p>
+                <p>Carbs: {recipe.perServing?.carbs ?? '—'}g</p>
+                <p>Fats: {recipe.perServing?.fat ?? '—'}g</p>
               </div>
             </div>
           </div>
@@ -106,7 +120,7 @@ const RecipeDetail = () => {
               {recipe.ingredients?.map((ing, i) => (
                 <label key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-transparent hover:border-[#0f5238]/20 transition-all cursor-pointer">
                   <input type="checkbox" className="w-5 h-5 rounded text-[#0f5238]" />
-                  <span className="text-gray-700">{ing.name || ing}</span>
+                  <span className="text-gray-700">{ing.name}</span>
                 </label>
               ))}
             </div>
@@ -117,12 +131,9 @@ const RecipeDetail = () => {
             <div className="space-y-8 relative">
               {recipe.steps?.map((step, i) => (
                 <div key={i} className="flex gap-6">
-                  <div className="w-10 h-10 bg-[#b1f0ce] text-[#0f5238] font-bold flex items-center justify-center step-number-pill shrink-0">
-                    {i + 1}
-                  </div>
+                  <div className="w-10 h-10 bg-[#b1f0ce] text-[#0f5238] font-bold flex items-center justify-center step-number-pill shrink-0">{i + 1}</div>
                   <div className="bg-white p-6 rounded-2xl shadow-sm w-full">
-                    <h3 className="font-bold text-[#0f5238] mb-2">{step.title || `Step ${i + 1}`}</h3>
-                    <p className="text-gray-600 leading-relaxed">{step.desc || step}</p>
+                    <p className="text-gray-600 leading-relaxed">{step}</p>
                   </div>
                 </div>
               ))}

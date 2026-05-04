@@ -24,7 +24,10 @@ function App() {
         <Route path="/recipes" element={<Recipes />} />
         <Route path="/grocery" element={<GroceryList />} />
         <Route path="/meal-planner" element={<MealPlanner />} />
+<<<<<<< HEAD
         <Route path="/CreateRecipe" element={<CreateRecipe />} />
+=======
+>>>>>>> origin/main
         <Route path="/profile" element={<Profile />} />
         <Route path="/create-recipe" element={
           <ProtectedRoute>
