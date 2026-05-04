@@ -243,10 +243,9 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("login");
 
-  // ← FIXED: navigate to dashboard instead of home
-  const handleSuccess = (user) => {
-    navigate("/dashboard");
-  };
+const handleSuccess = (user) => {
+  navigate("/dashboard"); // was "/" before
+};
 
   return (
     <>
