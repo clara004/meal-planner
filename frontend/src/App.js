@@ -3,7 +3,11 @@ import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
 import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
+import CreateRecipe from './pages/CreateRecipe';
 import Dashboard from './pages/Dashboard';
+import GroceryList from "./pages/GroceryList";
+import MealPlanner from './pages/MealPlanner';
+import Profile from './pages/Profile';
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem('token');
@@ -18,6 +22,14 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route path="/grocery" element={<GroceryList />} />
+        <Route path="/meal-planner" element={<MealPlanner />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/create-recipe" element={
+          <ProtectedRoute>
+            <CreateRecipe />
+          </ProtectedRoute>
+        } />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>

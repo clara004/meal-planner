@@ -81,7 +81,7 @@ function Dashboard() {
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {[
               { label: 'Browse Recipes', path: '/recipes' },
-              { label: 'View Meal Plans', path: '/meal-plans' },
+              { label: 'View Meal Plans', path: '/meal-planner' },
             ].map(({ label, path }) => (
               <button key={label} onClick={() => navigate(path)} style={{ background: '#0f5238', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '999px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}>
                 {label}
