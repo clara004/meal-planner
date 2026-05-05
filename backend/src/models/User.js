@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
   dietary_prefs: {
     type: [String],
     default: []
+  },
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Recipe'
+  }],
+  avatar: {
+    type: String,
+    default: null
   }
 });
 

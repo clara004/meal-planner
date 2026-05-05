@@ -9,6 +9,7 @@ const Recipes = () => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fallingItems, setFallingItems] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
   const handleCreateClick = () => {
     const veggieImages = [
@@ -31,8 +32,23 @@ const Recipes = () => {
       rotation: Math.random() * 360,
     }));
     setFallingItems((prev) => [...prev, ...newItems]);
-    setTimeout(() => { navigate('/create-recipe'); }, 800);
+    setTimeout(() => { navigate('/recipes/create'); }, 800);
     setTimeout(() => { setFallingItems((prev) => prev.slice(12)); }, 3000);
+  };
+
+  const toggleFavorite = async (recipeId) => {
+    const token = localStorage.getItem('token');
+    if (!token) { navigate('/login'); return; }
+    try {
+      const res = await api.post(`/user/favorites/${recipeId}`);
+      if (res.data.isFavorite) {
+        setFavorites(prev => [...prev, recipeId]);
+      } else {
+        setFavorites(prev => prev.filter(id => id !== recipeId));
+      }
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
   };
 
   useEffect(() => {
@@ -40,6 +56,15 @@ const Recipes = () => {
       try {
         const res = await api.get('/recipes');
         setRecipes(res.data.recipes);
+
+        // Load user favorites if logged in
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const favRes = await api.get('/user/favorites');
+            setFavorites(favRes.data.favorites.map(f => f._id || f));
+          } catch (e) { /* not logged in or error */ }
+        }
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
       } finally {
@@ -89,9 +114,11 @@ const Recipes = () => {
 
       {fallingItems.map((item) => (
         <img key={item.id} src={item.img} className="falling-veggie" alt="veggie"
-          style={{ right: `${item.right}px`, width: `${item.size}px`, height: 'auto',
+          style={{
+            right: `${item.right}px`, width: `${item.size}px`, height: 'auto',
             animationDuration: `${item.duration}s`, animationDelay: `${item.delay}s`,
-            transform: `rotate(${item.rotation}deg)` }} />
+            transform: `rotate(${item.rotation}deg)`
+          }} />
       ))}
 
       <div className="fixed bottom-8 right-8 z-50">
@@ -104,26 +131,27 @@ const Recipes = () => {
         </button>
       </div>
 
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100 shadow-sm">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-5">
-          <div onClick={() => navigate('/')} className="text-[24px] font-[800] text-[#0f5238] font-['Lexend'] cursor-pointer">Vitality Kitchen</div>
-          <div className="hidden md:flex gap-10 font-['Lexend'] text-[14px]">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] bg-transparent">Home</button>
-            <button onClick={() => navigate('/recipes')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238]">Recipes</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] bg-transparent">Meal Plan</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] bg-transparent">Grocery List</button>
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
+        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+          <div onClick={() => navigate('/')} className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer">Vitality Kitchen</div>
+          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
+            <button onClick={() => navigate('/recipes')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Recipes</button>
+            <button onClick={() => navigate('/meal-planner')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Planner</button>
+            <button onClick={() => navigate('/grocery')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
           </div>
           <div className="flex items-center gap-6">
-            <div className="relative hidden lg:block group">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#0f5238] transition-colors">search</span>
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 pr-6 py-2.5 bg-[#f3f4f5] border-stone-200/50 rounded-full focus:ring-2 focus:ring-[#0f5238]/20 w-72 text-sm transition-all shadow-sm"
-                placeholder="Search vitality..." type="text" />
-            </div>
-            <button onClick={() => navigate(localStorage.getItem('token') ? '/dashboard' : '/login')}
-              className="bg-[#0f5238] text-white px-6 py-2 pill-button font-bold text-sm hover:bg-[#064e3b] transition-all">
-              {localStorage.getItem('token') ? 'Dashboard' : 'Login'}
-            </button>
+            {localStorage.getItem('token') ? (
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                <span className="material-symbols-outlined text-sm">person</span>
+                Profile
+              </button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -133,10 +161,19 @@ const Recipes = () => {
           <div className="max-w-3xl space-y-4 mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#0f5238]/10 text-[#0f5238] font-bold text-[10px] tracking-widest uppercase">Chef-Curated Collection</div>
             <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] leading-[1.1] tracking-tighter">
-              Nourishing Recipes for Your <span className="text-[#895100] italic">Health Goals</span>
+              Nourishing recipes for your <span className="text-[#895100] italic">health goals</span>
             </h1>
             <p className="text-[18px] text-stone-600">Fresh ingredients, calculated macros, zero compromise.</p>
           </div>
+
+          {/* Search Bar - Moved from Header */}
+          <div className="relative w-full max-w-md mb-10 group">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#0f5238] transition-colors">search</span>
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-11 pr-6 py-3.5 bg-white border border-stone-200/80 rounded-full focus:ring-2 focus:ring-[#0f5238]/20 w-full text-sm transition-all shadow-sm"
+              placeholder="Search recipes (e.g. Avocado Toast)..." type="text" />
+          </div>
+
           <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
             {["All Recipes", "Breakfast", "Lunch", "Dinner", "Vegetarian", "Keto", "Gluten-Free", "Vegan"].map(cat => (
               <span key={cat} onClick={() => setActiveCategory(cat)}
@@ -154,7 +191,7 @@ const Recipes = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} />
+              <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} isFavorite={favorites.includes(recipe._id)} onToggleFavorite={() => toggleFavorite(recipe._id)} />
             ))}
           </div>
         )}
@@ -182,7 +219,7 @@ const Recipes = () => {
   );
 };
 
-const RecipeCard = ({ recipe, onClick }) => (
+const RecipeCard = ({ recipe, onClick, isFavorite, onToggleFavorite }) => (
   <div className="reveal group bg-white rounded-[2rem] overflow-hidden border border-stone-100/50 flex flex-col relative shadow-md hover:shadow-2xl transition-all duration-500">
     <div className="relative h-72 overflow-hidden">
       {recipe.image
@@ -190,8 +227,14 @@ const RecipeCard = ({ recipe, onClick }) => (
         : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
       }
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-      <button className="absolute top-5 right-5 w-11 h-11 bg-white/90 rounded-full text-[#0f5238] flex items-center justify-center transition-all bg-transparent">
-        <span className="material-symbols-outlined">favorite</span>
+      {recipe.averageRating >= 4 && (
+        <span className="absolute top-5 left-5 bg-white/90 px-3 py-1.5 rounded-full text-[#0f5238] text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+          <span className="material-symbols-outlined text-[12px]">stars</span> HIGHLY RATED
+        </span>
+      )}
+      <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+        className={`absolute top-5 right-5 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 ${isFavorite ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white/90 text-[#0f5238] hover:bg-[#0f5238] hover:text-white'}`}>
+        <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorite ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
       </button>
     </div>
     <div className="p-8 flex-grow">

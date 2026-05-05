@@ -72,8 +72,17 @@ const Home = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-            <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all">Get Started</button>
+            {localStorage.getItem('token') ? (
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                <span className="material-symbols-outlined text-sm">person</span>
+                Profile
+              </button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all">Get Started</button>
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -89,7 +98,7 @@ const Home = () => {
               </div>
               
               <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] max-w-4xl tracking-tighter leading-[1.1]">
-                Fuel Your Vitality with <span className="text-[#0f5238] italic">Every Bite</span>
+                Fuel your vitality with <span className="text-[#0f5238] italic">every bite</span>
               </h1>
               
               <p className="text-[18px] text-stone-600 max-w-2xl mx-auto leading-relaxed">

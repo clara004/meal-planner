@@ -4,7 +4,6 @@ import Home from './pages/Home';
 import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
 import CreateRecipe from './pages/CreateRecipe';
-import Dashboard from './pages/Dashboard';
 import GroceryList from "./pages/GroceryList";
 import MealPlanner from './pages/MealPlanner';
 import Profile from './pages/Profile';
@@ -24,22 +23,20 @@ function App() {
         <Route path="/recipes" element={<Recipes />} />
         <Route path="/grocery" element={<GroceryList />} />
         <Route path="/meal-planner" element={<MealPlanner />} />
-<<<<<<< HEAD
-        <Route path="/CreateRecipe" element={<CreateRecipe />} />
-=======
->>>>>>> origin/main
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/create-recipe" element={
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/recipes/create" element={
           <ProtectedRoute>
             <CreateRecipe />
           </ProtectedRoute>
         } />
+        <Route path="/CreateRecipe" element={<Navigate to="/recipes/create" replace />} />
+        <Route path="/create-recipe" element={<Navigate to="/recipes/create" replace />} />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
+        <Route path="/dashboard" element={<Navigate to="/profile" replace />} />
       </Routes>
     </Router>
   );

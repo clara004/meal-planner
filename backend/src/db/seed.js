@@ -8,10 +8,16 @@ const seed = async () => {
   try {
     await connectDB();
 
-    let user = await User.findOne();
+    let user = await User.findOne({ email: 'admin@vitalitykitchen.com' });
     if (!user) {
-      console.log('❌ No users found! Please register an account first, then run seed again.');
-      process.exit(1);
+      user = await User.create({
+        name: 'System Admin',
+        email: 'admin@vitalitykitchen.com',
+        password: 'dummy_password_hash', // In practice, use bcrypt, but this is a seed dummy.
+        calorie_goal: 2000,
+        dietary_prefs: []
+      });
+      console.log('Created System Admin user for seed recipes.');
     }
 
     const recipes = [
@@ -22,7 +28,7 @@ const seed = async () => {
         category: "Breakfast",
         cuisine: "American",
         dietaryTags: ["Vegetarian", "Gluten-Free"],
-        image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c820?w=800",
+        image: "https://images.unsplash.com/photo-1650330144131-84c9ba7661f4?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         prepTime: 15,
         servings: 2,
         ingredients: [
