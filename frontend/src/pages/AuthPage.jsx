@@ -244,7 +244,7 @@ export default function AuthPage() {
   const [tab, setTab] = useState("login");
 
 const handleSuccess = (user) => {
-  navigate("/dashboard"); // was "/" before
+  navigate("/profile");
 };
 
   return (

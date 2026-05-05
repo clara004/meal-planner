@@ -8,6 +8,37 @@ const CreateRecipe = () => {
   const navigate = useNavigate();
   const [fallingItems, setFallingItems] = useState([]);
   const [submitError, setSubmitError] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageData, setImageData] = useState('');
+  const fileInputRef = React.useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.8);
+        setImagePreview(compressed);
+        setImageData(compressed);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const triggerBurst = () => {
     const veggieImages = [
@@ -59,6 +90,7 @@ const CreateRecipe = () => {
             .split('\n')
             .filter(s => s.trim()),
           ingredients: [],
+          image: imageData || '',
         });
         triggerBurst();
         setTimeout(() => { navigate('/recipes'); }, 2500);
@@ -88,13 +120,31 @@ const CreateRecipe = () => {
         ))}
 
         <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-          <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-5">
-            <div onClick={() => navigate('/')} className="text-[24px] font-[800] text-[#064e3b] font-['Lexend'] cursor-pointer">Vitality Kitchen</div>
-            <div className="hidden md:flex gap-10 font-['Lexend'] text-[14px]">
-              <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238]">Home</button>
-              <button onClick={() => navigate('/recipes')} className="text-stone-500 font-medium hover:text-[#0f5238]">Recipes</button>
+          <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+            <div onClick={() => navigate('/')} className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer">
+              Vitality Kitchen
             </div>
-            <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-6 py-2 pill-button font-bold text-sm">Login</button>
+
+            <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+              <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
+              <button onClick={() => navigate('/recipes')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Recipes</button>
+              <button onClick={() => navigate('/meal-planner')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Planner</button>
+              <button onClick={() => navigate('/grocery')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
+            </div>
+
+            <div className="flex items-center gap-6">
+              {localStorage.getItem('token') ? (
+                <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                  <span className="material-symbols-outlined text-sm">person</span>
+                  Profile
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                  <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
+                </>
+              )}
+            </div>
           </nav>
         </header>
 
@@ -121,9 +171,25 @@ const CreateRecipe = () => {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-10">
                   <div className="md:col-span-5">
                     <label className="block text-[11px] font-[800] text-stone-400 uppercase tracking-[0.2em] mb-3">Recipe Photo</label>
-                    <div className="border-2 border-dashed border-emerald-200 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center bg-white/50 hover:bg-emerald-50 transition-all cursor-pointer group">
-                      <span className="material-symbols-outlined text-5xl text-[#0f5238] group-hover:scale-110 transition-transform">add_a_photo</span>
-                      <p className="font-['Lexend'] font-bold text-[#0f5238] mt-4">Upload Image</p>
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-emerald-200 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center bg-white/50 hover:bg-emerald-50 transition-all cursor-pointer group overflow-hidden relative"
+                    >
+                      {imagePreview ? (
+                        <>
+                          <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }} />
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} className="group-hover:!opacity-100">
+                            <span className="material-symbols-outlined text-4xl text-white">edit</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-5xl text-[#0f5238] group-hover:scale-110 transition-transform">add_a_photo</span>
+                          <p className="font-['Lexend'] font-bold text-[#0f5238] mt-4">Upload Image</p>
+                          <p className="text-stone-400 text-xs mt-1">Click to browse</p>
+                        </>
+                      )}
                     </div>
                   </div>
 

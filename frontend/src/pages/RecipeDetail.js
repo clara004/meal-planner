@@ -15,6 +15,13 @@ const RecipeDetail = () => {
       try {
         const res = await api.get(`/recipes/${id}`);
         setRecipe(res.data.recipe);
+        
+        const storedUserStr = localStorage.getItem('user');
+        if (storedUserStr && res.data.recipe.ratings) {
+          const user = JSON.parse(storedUserStr);
+          const existing = res.data.recipe.ratings.find(r => r.user === user.id);
+          if (existing) setUserRating(existing.rating);
+        }
       } catch (err) {
         console.error('Failed to fetch recipe:', err);
       } finally {
@@ -23,6 +30,22 @@ const RecipeDetail = () => {
     };
     fetchRecipe();
   }, [id]);
+
+  const handleRating = async (star) => {
+    setUserRating(star);
+    try {
+      const res = await api.post(`/recipes/${id}/rate`, { rating: star });
+      setRecipe(res.data.recipe);
+    } catch (err) {
+      console.error('Failed to save rating:', err);
+    }
+  };
+
+  const [pageLoaded, setPageLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 50);
+    return () => clearTimeout(timer);
+  }, [recipe]);
 
   if (loading) return <div className="pt-40 text-center text-gray-400">Loading recipe...</div>;
   if (!recipe) return <div className="pt-40 text-center">Recipe not found.</div>;
@@ -34,14 +57,54 @@ const RecipeDetail = () => {
         .step-number-pill { border-radius: 9999px; }
       `}</style>
 
-      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 h-16 flex items-center px-6">
-        <div className="max-w-[1280px] mx-auto w-full flex justify-between items-center">
-          <span className="text-2xl font-bold text-emerald-800 cursor-pointer" onClick={() => navigate('/')}>Vitality Kitchen</span>
-          <span className="material-symbols-outlined text-emerald-800 cursor-pointer">account_circle</span>
-        </div>
-      </nav>
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
+        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+          <div 
+            onClick={() => navigate('/')} 
+            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
+          >
+            Vitality Kitchen
+          </div>
+          
+          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
+            <button 
+              onClick={() => navigate('/recipes')} 
+              className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
+            >
+              Recipes
+            </button>
+            <button 
+              onClick={() => navigate('/meal-planner')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Meal Planner
+            </button>
+            <button 
+              onClick={() => navigate('/grocery')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Grocery List
+            </button>
+          </div>
 
-      <main className="pt-24 pb-20 max-w-[1280px] mx-auto px-6">
+          <div className="flex items-center gap-6">
+            {localStorage.getItem('token') ? (
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                <span className="material-symbols-outlined text-sm">person</span>
+                Profile
+              </button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
+              </>
+            )}
+          </div>
+        </nav>
+      </header>
+
+      <main className={`reveal ${pageLoaded ? 'active' : ''} pt-24 pb-20 max-w-[1280px] mx-auto px-6`}>
         <button onClick={() => navigate('/recipes')}
           className="flex items-center gap-2 text-[#0f5238] font-bold mb-8 hover:bg-[#b1f0ce] px-4 py-2 rounded-full transition-all">
           <span className="material-symbols-outlined text-lg">arrow_back</span> Back to Recipes
@@ -55,7 +118,11 @@ const RecipeDetail = () => {
                 : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
               }
               <div className="absolute top-6 left-6 flex gap-2">
-                <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm">TOP RATED</span>
+                {recipe.averageRating >= 4 && (
+                  <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">stars</span> HIGHLY RATED
+                  </span>
+                )}
                 {recipe.category && <span className="bg-[#0f5238]/90 px-4 py-1.5 rounded-full text-white text-xs font-bold shadow-sm">{recipe.category.toUpperCase()}</span>}
               </div>
             </div>
@@ -64,7 +131,7 @@ const RecipeDetail = () => {
               <p className="text-[10px] font-[800] text-gray-400 uppercase tracking-widest mb-2">Rate this recipe</p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <span key={star} onClick={() => setUserRating(star)}
+                  <span key={star} onClick={() => handleRating(star)}
                     className="material-symbols-outlined cursor-pointer text-4xl transition-all duration-200 hover:scale-110"
                     style={{ fontVariationSettings: `'FILL' ${userRating >= star ? 1 : 0}`, color: userRating >= star ? '#fd9d1a' : '#bfc9c1' }}>
                     star
@@ -72,6 +139,7 @@ const RecipeDetail = () => {
                 ))}
               </div>
               {userRating > 0 && <p className="text-xs font-bold text-[#0f5238] mt-2">You rated this {userRating} stars!</p>}
+              {recipe.averageRating > 0 && <p className="text-xs text-gray-400 mt-1">Average rating: {recipe.averageRating} / 5</p>}
             </div>
           </div>
 

@@ -47,7 +47,12 @@ const recipeSchema = new mongoose.Schema({
     protein: { type: Number, default: 0 },
     carbs: { type: Number, default: 0 },
     fat: { type: Number, default: 0 }
-  }
+  },
+  ratings: [{
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    rating: { type: Number, min: 1, max: 5 }
+  }],
+  averageRating: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Recipe', recipeSchema);

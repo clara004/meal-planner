@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const NAV_LINKS = [
@@ -94,8 +94,15 @@ export default function GroceryList() {
   const markAllDone = () =>
     setChecked(Object.fromEntries(allItems.map((i) => [i.id, true])));
 
+  const [pageLoaded, setPageLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setPageLoaded(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
+      className={`reveal ${pageLoaded ? 'active' : ''}`}
       style={{
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         background: "#f8f9fa",
@@ -111,155 +118,51 @@ export default function GroceryList() {
       />
 
       {/* ── TOP NAV ── */}
-      <header
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100%",
-          zIndex: 50,
-          background: "white",
-          borderBottom: "1px solid #ecfdf5",
-          boxShadow: "0 4px 20px rgba(45,106,79,0.05)",
-          fontFamily: "'Lexend', sans-serif",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "16px 32px",
-            maxWidth: 1280,
-            margin: "0 auto",
-          }}
-        >
-          {/* Logo */}
-          <Link
-            to="/"
-            style={{
-              fontSize: 22,
-              fontWeight: 700,
-              color: "#065f46",
-              textDecoration: "none",
-              letterSpacing: "-0.02em",
-            }}
+      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
+        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
+          <div 
+            onClick={() => navigate('/')} 
+            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
           >
             Vitality Kitchen
-          </Link>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide desktop-nav">
-            <button
-              onClick={() => navigate('/')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Home
-            </button>
-
-            <button
-              onClick={() => navigate('/recipes')}
+          </div>
+          
+          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
+            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
+            <button 
+              onClick={() => navigate('/recipes')} 
               className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
             >
               Recipes
             </button>
-
-            <button
-              onClick={() => navigate('/meal-planner')}
-              
-            className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            <button 
+              onClick={() => navigate('/meal-planner')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
             >
               Meal Planner
             </button>
-
-            <button
-              onClick={() => navigate('/grocery')}
+            <button 
+              onClick={() => navigate('/grocery')} 
               className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
             >
               Grocery List
             </button>
           </div>
-          {/* CTA */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Link
-              to="/auth"
-              style={{
-                padding: "8px 16px",
-                color: "#0f5238",
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none",
-                letterSpacing: "0.03em",
-              }}
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/auth"
-              style={{
-                padding: "8px 20px",
-                background: "#0f5238",
-                color: "white",
-                borderRadius: 9999,
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none",
-                boxShadow: "0 4px 12px rgba(15,82,56,0.3)",
-                transition: "background 0.2s",
-              }}
-            >
-              Get Started
-            </Link>
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                display: "none",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 4,
-              }}
-              className="hamburger"
-              aria-label="Menu"
-            >
-              <div style={{ width: 24, height: 2, background: "#374151", marginBottom: 5 }} />
-              <div style={{ width: 24, height: 2, background: "#374151", marginBottom: 5 }} />
-              <div style={{ width: 24, height: 2, background: "#374151" }} />
-            </button>
+          <div className="flex items-center gap-6">
+            {localStorage.getItem('token') ? (
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                <span className="material-symbols-outlined text-sm">person</span>
+                Profile
+              </button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
+              </>
+            )}
           </div>
-        </div>
-
-        {/* Mobile Nav Drawer */}
-        {mobileMenuOpen && (
-          <div
-            style={{
-              background: "white",
-              borderTop: "1px solid #e5e7eb",
-              padding: "16px 32px",
-              display: "flex",
-              flexDirection: "column",
-              gap: 16,
-            }}
-          >
-            {NAV_LINKS.map((l) => (
-              <Link
-                key={l.to}
-                to={l.to}
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  textDecoration: "none",
-                  color: l.active ? "#047857" : "#374151",
-                  fontWeight: l.active ? 700 : 500,
-                  fontSize: 16,
-                }}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-        )}
+        </nav>
       </header>
 
       {/* ── MAIN ── */}
