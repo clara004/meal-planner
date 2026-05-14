@@ -208,26 +208,21 @@ const Home = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] tracking-tight cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2024 Vitality Kitchen.</p>
+            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-10">
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">FAQ</button>
           </div>
           <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 hover:bg-[#0f5238] hover:text-white shadow-sm transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-xl">share</span>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 hover:bg-[#0f5238] hover:text-white shadow-sm transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-xl">mail</span>
-            </div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
           </div>
         </div>
       </footer>

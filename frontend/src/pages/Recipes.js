@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
+const RECIPES_PER_PAGE = 12;
+
 const Recipes = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Recipes");
+  const [currentPage, setCurrentPage] = useState(1);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fallingItems, setFallingItems] = useState([]);
@@ -42,7 +45,7 @@ const Recipes = () => {
     try {
       const res = await api.post(`/user/favorites/${recipeId}`);
       if (res.data.isFavorite) {
-        setFavorites(prev => [...prev, recipeId]);
+        setFavorites(prev => Array.from(new Set([...prev, recipeId])));
       } else {
         setFavorites(prev => prev.filter(id => id !== recipeId));
       }
@@ -82,6 +85,24 @@ const Recipes = () => {
       (recipe.dietaryTags && recipe.dietaryTags.includes(activeCategory));
     return matchesSearch && matchesCategory;
   });
+  const totalPages = Math.max(1, Math.ceil(filteredRecipes.length / RECIPES_PER_PAGE));
+  const pageStart = (currentPage - 1) * RECIPES_PER_PAGE;
+  const paginatedRecipes = filteredRecipes.slice(pageStart, pageStart + RECIPES_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeCategory]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const revealObserver = new IntersectionObserver((entries) => {
@@ -91,7 +112,7 @@ const Recipes = () => {
     }, { threshold: 0.1 });
     document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
     return () => revealObserver.disconnect();
-  }, [filteredRecipes]);
+  }, [paginatedRecipes]);
 
   return (
     <div className="flex flex-col min-h-screen font-['Plus_Jakarta_Sans'] text-[#191c1d] selection:bg-[#0f5238]/20">
@@ -189,19 +210,38 @@ const Recipes = () => {
         ) : filteredRecipes.length === 0 ? (
           <div className="text-center py-20 text-gray-400 text-lg">No recipes found.</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredRecipes.map(recipe => (
-              <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} isFavorite={favorites.includes(recipe._id)} onToggleFavorite={() => toggleFavorite(recipe._id)} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedRecipes.map(recipe => (
+                <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} isFavorite={favorites.includes(recipe._id)} onToggleFavorite={() => toggleFavorite(recipe._id)} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-14 flex flex-wrap items-center justify-center gap-3">
+                {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => handlePageChange(page)}
+                    className={`w-11 h-11 rounded-full font-bold text-sm transition-all ${currentPage === page ? 'bg-[#0f5238] text-white shadow-lg' : 'bg-white border border-stone-200 text-stone-600 hover:bg-emerald-50 hover:text-[#0f5238]'}`}
+                    aria-label={`Go to recipes page ${page}`}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
             <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2024 Vitality Kitchen.</p>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-10">
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>

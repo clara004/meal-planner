@@ -6,6 +6,29 @@ import api from '../utils/api';
 
 const ALL_PREFS = ['Vegan', 'Gluten-Free', 'Keto', 'Paleo', 'High-Protein', 'Dairy-Free', 'Nut-Free'];
 
+// Normalize a free-text pref to its canonical ALL_PREFS form (case-insensitive).
+// Returns the canonical version if matched, otherwise returns the original string trimmed.
+function normalizePref(raw) {
+  const trimmed = raw.trim();
+  const match = ALL_PREFS.find(p => p.toLowerCase() === trimmed.toLowerCase());
+  return match || trimmed;
+}
+
+function normalizePrefsArray(arr) {
+  if (!arr || !Array.isArray(arr)) return [];
+  // Normalize & deduplicate
+  const seen = new Set();
+  const result = [];
+  for (const p of arr) {
+    const norm = normalizePref(p);
+    if (norm && !seen.has(norm.toLowerCase())) {
+      seen.add(norm.toLowerCase());
+      result.push(norm);
+    }
+  }
+  return result;
+}
+
 // ── Validation Schema ─────────────────────────────────────────────────────────
 const profileSchema = Yup.object({
   name:        Yup.string().min(2, 'Name must be at least 2 characters').required('Name is required'),
@@ -33,8 +56,11 @@ function Stars({ rating }) {
 }
 
 // ── Recipe Card ───────────────────────────────────────────────────────────────
-function RecipeCard({ recipe, onDelete, navigate }) {
+function RecipeCard({ recipe, onDelete, onRemoveFavorite, navigate }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const isEditable = Boolean(onDelete);
+  const isFavoriteCard = Boolean(onRemoveFavorite);
+
   return (
     <div style={{ background: 'white', borderRadius: '16px', overflow: 'hidden',
       boxShadow: '0 4px 20px rgba(45,106,79,0.07)', border: '1px solid #ecfdf5' }}>
@@ -53,13 +79,26 @@ function RecipeCard({ recipe, onDelete, navigate }) {
           color: '#707973', marginBottom: '8px' }}>{recipe.perServing ? Math.round(recipe.perServing.calories) : recipe.kcal} kcal / serving</p>
         <Stars rating={recipe.averageRating || recipe.rating || 0} />
         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-          <button onClick={() => navigate('/recipes/' + (recipe._id || recipe.id))} style={{ flex: 1, padding: '8px', background: '#f0faf5', color: '#0f5238',
+          <button onClick={() => {
+            const recipeId = recipe._id || recipe.id;
+            navigate(isEditable ? `/recipes/edit/${recipeId}` : `/recipes/${recipeId}`);
+          }} style={{ flex: 1, padding: '8px', background: '#f0faf5', color: '#0f5238',
             border: 'none', borderRadius: '8px', cursor: 'pointer',
             fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>edit</span>Edit
+            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>{isEditable ? 'edit' : 'visibility'}</span>
+            {isEditable ? 'Edit' : 'View'}
           </button>
-          {confirmDelete ? (
+          {isFavoriteCard ? (
+            <button onClick={() => onRemoveFavorite(recipe._id || recipe.id)}
+              style={{ flex: 1, padding: '8px', background: '#ffdad6', color: '#93000a',
+                border: 'none', borderRadius: '8px', cursor: 'pointer',
+                fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', fontVariationSettings: '"FILL" 1' }}>favorite</span>
+              Remove
+            </button>
+          ) : confirmDelete ? (
             <div style={{ flex: 1, display: 'flex', gap: '4px' }}>
               <button onClick={() => onDelete(recipe._id || recipe.id)}
                 style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white',
@@ -70,7 +109,7 @@ function RecipeCard({ recipe, onDelete, navigate }) {
                   border: 'none', borderRadius: '8px', cursor: 'pointer',
                   fontFamily: 'Plus Jakarta Sans', fontSize: '11px', fontWeight: 700 }}>No</button>
             </div>
-          ) : (
+          ) : isEditable ? (
             <button onClick={() => setConfirmDelete(true)}
               style={{ flex: 1, padding: '8px', background: '#ffdad6', color: '#93000a',
                 border: 'none', borderRadius: '8px', cursor: 'pointer',
@@ -78,7 +117,7 @@ function RecipeCard({ recipe, onDelete, navigate }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>delete</span>Delete
             </button>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -132,10 +171,12 @@ export default function Profile() {
   const [stats, setStats]         = useState({ recipesCreated: 0, mealsPlanned: 0, recipesRated: 0 });
   const [loading, setLoading]     = useState(true);
   const [editMode, setEditMode]   = useState(false);
-  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'recipes'
+  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'recipes' | 'favorites'
   const [recipes, setRecipes]     = useState([]);
+  const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [savedMsg, setSavedMsg]   = useState(false);
   const [selectedPrefs, setSelectedPrefs] = useState([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef(null);
 
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -148,22 +189,24 @@ export default function Profile() {
 
   const fetchProfileData = async () => {
     try {
-      const [profileRes, recipesRes] = await Promise.all([
+      const [profileRes, recipesRes, favoritesRes] = await Promise.all([
         api.get('/user/profile'),
-        api.get('/recipes/my-recipes')
+        api.get('/recipes/my-recipes'),
+        api.get('/user/favorites')
       ]);
       const u = profileRes.data.user;
       
       const memberDate = new Date(u.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       u.memberSince = memberDate;
       if (!u.avatar) {
-        u.avatar = 'https://lh3.googleusercontent.com/aida-public/AB6AXuAF1A43lE5FzpyCtsh5bGVBNgjuO2B_fiwdZPpEXjGSEBmWtnbxkwtztdMYvcZboIKrXHDz6OjYH321BaUcmR1HSybz2F1Xhb8sCRw8OzXpWZxErE4XP2rgZIm0oq3GXHNrERDXsjJOIjBrcGvjcEDHTExi13ol8-amByDgh5Yz640cveHVvFNTQEeDQHUe76_xFjvNWOzsK8l3y5idOs1i2F8etBO_9dYvSrM28YJgvn6pfHe5HnfvLbdjF6InlfwlP-GGCJCyEQ1n';
+        u.avatar = '/default-avatar.png';
       }
 
       setUser(u);
-      setSelectedPrefs(u.dietary_prefs || []);
+      setSelectedPrefs(normalizePrefsArray(u.dietary_prefs));
       setStats(profileRes.data.stats);
       setRecipes(recipesRes.data.recipes || []);
+      setFavoriteRecipes(favoritesRes.data.favorites || []);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -209,7 +252,7 @@ export default function Profile() {
 
   const handleCancel = () => {
     formik.resetForm();
-    setSelectedPrefs(user?.dietary_prefs || []);
+    setSelectedPrefs(normalizePrefsArray(user?.dietary_prefs));
     setEditMode(false);
   };
 
@@ -217,6 +260,22 @@ export default function Profile() {
     try {
       await api.delete(`/recipes/${id}`);
       setRecipes(prev => prev.filter(r => (r._id || r.id) !== id));
+      setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id) !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRemoveFavorite = async (id) => {
+    try {
+      const res = await api.post(`/user/favorites/${id}`);
+      if (!res.data.isFavorite) {
+        setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id) !== id));
+        setUser(prev => ({
+          ...prev,
+          favorites: (prev?.favorites || []).filter(favId => favId !== id)
+        }));
+      }
     } catch (err) {
       console.error(err);
     }
@@ -268,6 +327,18 @@ export default function Profile() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.delete('/user/profile');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to delete account');
+    }
   };
 
   if (loading) {
@@ -443,6 +514,27 @@ export default function Profile() {
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
                   Logout
                 </button>
+
+                {/* Delete Account */}
+                {showDeleteConfirm ? (
+                  <div style={{ marginTop: '12px', width: '100%', background: '#ffdad6', padding: '12px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#93000a', fontWeight: 600, margin: 0 }}>Are you sure? This will permanently delete your account and all saved recipes.</p>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={handleDeleteAccount} style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Yes, Delete</button>
+                      <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '8px', background: 'transparent', color: '#93000a', border: '1px solid #ba1a1a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowDeleteConfirm(true)}
+                    style={{ width: '100%', padding: '12px', background: 'transparent', color: '#ba1a1a',
+                      border: 'none', borderRadius: '10px', cursor: 'pointer',
+                      fontFamily: 'Lexend', fontSize: '13px', fontWeight: 600, marginTop: '8px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      transition: 'all 0.15s' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>delete_forever</span>
+                    Delete Account
+                  </button>
+                )}
               </div>
             </aside>
 
@@ -452,7 +544,7 @@ export default function Profile() {
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #e1e3e4',
                 marginBottom: '24px' }}>
-                {[['info','My Info'],['recipes','My Recipes']].map(([key, label]) => (
+                {[['info','My Info'],['recipes','My Recipes'],['favorites','Favorites']].map(([key, label]) => (
                   <button key={key} onClick={() => setActiveTab(key)}
                     style={{ padding: '12px 24px', background: 'none', border: 'none',
                       cursor: 'pointer', fontFamily: 'Lexend', fontSize: '14px',
@@ -506,6 +598,24 @@ export default function Profile() {
                               </button>
                             );
                           })}
+                          {/* Show any custom prefs not in ALL_PREFS so the user can remove them */}
+                          {selectedPrefs
+                            .filter(p => !ALL_PREFS.map(a => a.toLowerCase()).includes(p.toLowerCase()))
+                            .map(pref => (
+                              <button key={pref} type="button" onClick={() => togglePref(pref)}
+                                className="pf-pref-chip"
+                                style={{ padding: '7px 16px', borderRadius: '9999px',
+                                  border: '1.5px solid #2d6a4f',
+                                  background: '#b1f0ce', color: '#0f5238',
+                                  fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
+                                  display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span className="material-symbols-outlined"
+                                  style={{ fontSize: '14px' }}>check</span>
+                                {pref}
+                                <span className="material-symbols-outlined"
+                                  style={{ fontSize: '14px', marginLeft: '2px' }}>close</span>
+                              </button>
+                            ))}
                         </div>
                       </div>
 
@@ -669,29 +779,84 @@ export default function Profile() {
                   )}
                 </div>
               )}
+
+              {activeTab === 'favorites' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
+                      color: '#0f5238' }}>Favorites ({favoriteRecipes.length})</h3>
+                    <button onClick={() => navigate('/recipes')}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '10px 20px', background: '#0f5238', color: 'white',
+                        border: 'none', borderRadius: '10px', cursor: 'pointer',
+                        fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
+                        boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                      Browse Recipes
+                    </button>
+                  </div>
+
+                  {favoriteRecipes.length > 0 ? (
+                    <div className="pf-recipes-grid"
+                      style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px' }}>
+                      {favoriteRecipes.map(r => (
+                        <div key={r._id || r.id} className="pf-recipe-card">
+                          <RecipeCard recipe={r} onRemoveFavorite={handleRemoveFavorite} navigate={navigate} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px',
+                      boxShadow: '0 4px 20px rgba(45,106,79,0.06)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      textAlign: 'center', gap: '16px' }}>
+                      <div style={{ width: '80px', height: '80px', background: '#f0faf5',
+                        borderRadius: '50%', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined"
+                          style={{ fontSize: '40px', color: '#2d6a4f', fontVariationSettings: '"FILL" 1' }}>favorite</span>
+                      </div>
+                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
+                        color: '#191c1d' }}>No favorite recipes yet</h4>
+                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px',
+                        color: '#707973', maxWidth: '320px', lineHeight: 1.6 }}>
+                        Tap the heart on any recipe to keep it here for later.
+                      </p>
+                      <button onClick={() => navigate('/recipes')}
+                        style={{ marginTop: '8px', padding: '12px 28px', background: '#0f5238',
+                          color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                          fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restaurant</span>
+                        Find Recipes
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           </div>
         </div>
       </main>
 
       {/* ── Footer ── */}
-      <footer style={{ background: '#f9fafb', borderTop: '1px solid #e5e7eb', marginTop: '40px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '40px 32px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <div style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 800,
-              color: '#2d6a4f', marginBottom: '4px' }}>Vitality Kitchen</div>
-            <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#6b7280' }}>
-              © 2024 Vitality Kitchen. Nourishing your journey.
-            </p>
+            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex flex-col items-center md:items-start gap-6">
+            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-            {['Support','Privacy Policy','Terms of Service','Contact Us'].map(l => (
-              <a key={l} href="#" style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px',
-                color: '#6b7280', textDecoration: 'underline', textUnderlineOffset: '4px',
-                transition: 'color 0.15s' }}>{l}</a>
-            ))}
+          <div className="flex flex-wrap justify-center gap-10">
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
           </div>
         </div>
       </footer>

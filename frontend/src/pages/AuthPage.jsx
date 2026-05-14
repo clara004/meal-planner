@@ -136,11 +136,21 @@ function LoginForm({ onSuccess }) {
   );
 }
 
+const DIETARY_OPTIONS = ['Vegan', 'Vegetarian', 'Gluten-Free', 'Keto', 'Paleo', 'High-Protein', 'Dairy-Free', 'Nut-Free'];
+
 function RegisterForm({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedPrefs, setSelectedPrefs] = useState([]);
+  const [showOther, setShowOther] = useState(false);
+  const [otherPref, setOtherPref] = useState("");
+  const [prefsDropdownOpen, setPrefsDropdownOpen] = useState(false);
+
+  const togglePref = (pref) => {
+    setSelectedPrefs(prev => prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]);
+  };
 
   const formik = useFormik({
     initialValues: { name: "", email: "", password: "", confirmPassword: "", calorieGoal: "", dietaryPrefs: "" },
@@ -149,12 +159,16 @@ function RegisterForm({ onSuccess }) {
       setLoading(true);
       setServerError("");
       try {
+        const allPrefs = [...selectedPrefs];
+        if (showOther && otherPref.trim()) {
+          allPrefs.push(otherPref.trim());
+        }
         const payload = {
           name: values.name,
           email: values.email,
           password: values.password,
           calorie_goal: Number(values.calorieGoal),
-          dietary_prefs: values.dietaryPrefs ? values.dietaryPrefs.split(",").map(s => s.trim()) : [],
+          dietary_prefs: allPrefs,
         };
         const res = await api.post("/auth/register", payload);
         localStorage.setItem("token", res.data.token);
@@ -219,18 +233,89 @@ function RegisterForm({ onSuccess }) {
         ]}
       />
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <label htmlFor="dietaryPrefs" style={styles.label}>Dietary Preferences <span style={{ color: "#707973", fontWeight: 400 }}>(optional)</span></label>
+        <label style={styles.label}>Dietary Preferences <span style={{ color: "#707973", fontWeight: 400 }}>(optional)</span></label>
+        {/* Dropdown trigger */}
         <div style={{ position: "relative" }}>
-          <span className="material-symbols-outlined" style={styles.inputIcon}>restaurant</span>
-          <input
-            id="dietaryPrefs" name="dietaryPrefs" type="text"
-            placeholder="e.g. vegan, gluten-free, keto"
-            value={formik.values.dietaryPrefs}
-            onChange={formik.handleChange} onBlur={formik.handleBlur}
-            style={{ ...styles.input, border: "2px solid transparent" }}
-          />
+          <button type="button" onClick={() => setPrefsDropdownOpen(prev => !prev)}
+            style={{ ...styles.input, paddingLeft: "48px", display: "flex", alignItems: "center", cursor: "pointer",
+              background: "#f1f3f5", border: prefsDropdownOpen ? "2px solid #2d6a4f" : "2px solid transparent",
+              textAlign: "left", color: selectedPrefs.length > 0 ? "#191c1d" : "#aab0ac" }}>
+            <span className="material-symbols-outlined" style={{ ...styles.inputIcon, pointerEvents: "none" }}>restaurant</span>
+            {selectedPrefs.length > 0
+              ? <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "14px", fontWeight: 500 }}>{selectedPrefs.join(", ")}{showOther && otherPref ? `, ${otherPref}` : ""}</span>
+              : <span style={{ fontSize: "14px" }}>Select dietary preferences...</span>}
+            <span className="material-symbols-outlined" style={{ ...styles.inputIconRight, pointerEvents: "none", transition: "transform 0.2s", transform: prefsDropdownOpen ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}>expand_more</span>
+          </button>
+          {/* Dropdown panel */}
+          {prefsDropdownOpen && (
+            <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
+              background: "white", borderRadius: "14px", border: "1.5px solid #e1e3e4",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.12)", padding: "8px", maxHeight: "260px", overflowY: "auto" }}>
+              {DIETARY_OPTIONS.map(pref => {
+                const active = selectedPrefs.includes(pref);
+                return (
+                  <button key={pref} type="button" onClick={() => togglePref(pref)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                      padding: "10px 12px", border: "none", borderRadius: "10px", cursor: "pointer",
+                      background: active ? "#e8f5e9" : "transparent",
+                      fontFamily: "Plus Jakarta Sans", fontSize: "14px", fontWeight: active ? 700 : 500,
+                      color: active ? "#2d6a4f" : "#404943", transition: "all 0.15s" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "18px", color: active ? "#2d6a4f" : "#bfc9c1",
+                      fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}>
+                      {active ? "check_box" : "check_box_outline_blank"}
+                    </span>
+                    {pref}
+                  </button>
+                );
+              })}
+              {/* Divider */}
+              <div style={{ height: "1px", background: "#e1e3e4", margin: "4px 0" }} />
+              {/* Other option */}
+              <button type="button" onClick={() => { setShowOther(prev => !prev); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                  padding: "10px 12px", border: "none", borderRadius: "10px", cursor: "pointer",
+                  background: showOther ? "#e8f5e9" : "transparent",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "14px", fontWeight: showOther ? 700 : 500,
+                  color: showOther ? "#2d6a4f" : "#404943", transition: "all 0.15s" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: showOther ? "#2d6a4f" : "#bfc9c1",
+                  fontVariationSettings: showOther ? "'FILL' 1" : "'FILL' 0" }}>
+                  {showOther ? "check_box" : "check_box_outline_blank"}
+                </span>
+                Other
+              </button>
+              {showOther && (
+                <div style={{ padding: "6px 12px 8px" }}>
+                  <input type="text" placeholder="Type your preference..." value={otherPref}
+                    onChange={(e) => setOtherPref(e.target.value)}
+                    style={{ ...styles.input, height: "40px", paddingLeft: "14px", fontSize: "13px" }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <span style={{ fontSize: "11px", color: "#707973" }}>Separate multiple preferences with commas</span>
+        {/* Selected chips preview */}
+        {(selectedPrefs.length > 0 || (showOther && otherPref)) && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+            {selectedPrefs.map(pref => (
+              <span key={pref} onClick={() => togglePref(pref)}
+                style={{ display: "inline-flex", alignItems: "center", gap: "4px",
+                  padding: "4px 12px", borderRadius: "9999px", background: "#b1f0ce", color: "#0f5238",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                {pref}
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+              </span>
+            ))}
+            {showOther && otherPref && (
+              <span onClick={() => { setOtherPref(""); setShowOther(false); }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "4px",
+                  padding: "4px 12px", borderRadius: "9999px", background: "#fef3c7", color: "#92400e",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                {otherPref}
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <button type="submit" disabled={loading} style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }}>
         {loading ? "Creating account..." : "Create My Account"}

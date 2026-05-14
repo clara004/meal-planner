@@ -609,46 +609,21 @@ export default function GroceryList() {
       </div>
 
       {/* ── GLOBAL FOOTER ── */}
-      <footer
-        style={{
-          background: "#f8fafc",
-          borderTop: "1px solid #e2e8f0",
-          marginTop: 0,
-          fontFamily: "'Lexend', sans-serif",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "48px 32px",
-            maxWidth: 1280,
-            margin: "0 auto",
-            gap: 24,
-          }}
-        >
-          <div>
-            <p style={{ fontSize: 18, fontWeight: 700, color: "#065f46", margin: 0 }}>
-              Vitality Kitchen
-            </p>
-            <p style={{ color: "#94a3b8", fontSize: 14, margin: "6px 0 0" }}>
-              © 2024 Vitality Kitchen. Empowering your health journey.
-            </p>
+            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex flex-col items-center md:items-start gap-6">
+            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
-          <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
-            {["Privacy Policy", "Terms of Service", "Support", "Contact Us"].map((l) => (
-              <a
-                key={l}
-                href="#"
-                style={{ color: "#94a3b8", textDecoration: "none", fontSize: 14, transition: "color 0.2s" }}
-                onMouseEnter={(e) => (e.target.style.color = "#047857")}
-                onMouseLeave={(e) => (e.target.style.color = "#94a3b8")}
-              >
-                {l}
-              </a>
-            ))}
+          <div className="flex flex-wrap justify-center gap-10">
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
           </div>
         </div>
       </footer>
