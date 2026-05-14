@@ -118,6 +118,11 @@ const RecipeDetail = () => {
                 : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
               }
               <div className="absolute top-6 left-6 flex gap-2">
+                {recipe.isUserCreated !== false && (
+                  <span className="bg-[#fd9d1a]/95 px-4 py-1.5 rounded-full text-[#2c1700] text-xs font-bold shadow-sm flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: '"FILL" 1' }}>person</span> USER CREATED
+                  </span>
+                )}
                 {recipe.averageRating >= 4 && (
                   <span className="bg-white/90 px-4 py-1.5 rounded-full text-[#0f5238] text-xs font-bold shadow-sm flex items-center gap-1">
                     <span className="material-symbols-outlined text-[14px]">stars</span> HIGHLY RATED

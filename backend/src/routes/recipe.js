@@ -36,12 +36,24 @@ const calculateNutrition = (ingredients, servings) => {
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { ingredients = [], servings } = req.body;
+    const cleanIngredients = ingredients
+      .filter(ing => ing && String(ing.name || '').trim())
+      .map(ing => ({
+        ...ing,
+        name: String(ing.name).trim(),
+        calories: Number(ing.calories) || 0,
+        protein: Number(ing.protein) || 0,
+        carbs: Number(ing.carbs) || 0,
+        fat: Number(ing.fat) || 0,
+      }));
 
-    const nutrition = calculateNutrition(ingredients, servings);
+    const nutrition = calculateNutrition(cleanIngredients, servings);
 
     const recipe = new Recipe({
       ...req.body,
+      ingredients: cleanIngredients,
       user: req.user.id,
+      isUserCreated: true,
       ...nutrition
     });
 
@@ -50,7 +62,9 @@ router.post('/', authMiddleware, async (req, res) => {
     res.status(201).json({ message: 'Recipe created', recipe });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Failed to create recipe:', err);
+    const status = err.name === 'ValidationError' ? 400 : 500;
+    res.status(status).json({ message: err.message || 'Failed to create recipe' });
   }
 });
 
@@ -89,7 +103,7 @@ router.get('/', async (req, res) => {
 // ✅ Get my recipes
 router.get('/my-recipes', authMiddleware, async (req, res) => {
   try {
-    const recipes = await Recipe.find({ user: req.user.id });
+    const recipes = await Recipe.find({ user: req.user.id, isUserCreated: { $ne: false } });
     res.json({ recipes });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -125,7 +139,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Recipe not found' });
     }
 
-    if (recipe.user.toString() !== req.user.id) {
+    if (recipe.isUserCreated === false || recipe.user.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -198,7 +212,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Recipe not found' });
     }
 
-    if (recipe.user.toString() !== req.user.id) {
+    if (recipe.isUserCreated === false || recipe.user.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 

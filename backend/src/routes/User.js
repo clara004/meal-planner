@@ -110,16 +110,19 @@ router.post('/favorites/:recipeId', authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const recipeId = req.params.recipeId;
-    const index = user.favorites.indexOf(recipeId);
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
 
-    if (index > -1) {
-      user.favorites.splice(index, 1);
+    const isFavorite = user.favorites.some(id => id.toString() === recipeId);
+
+    if (isFavorite) {
+      user.favorites = user.favorites.filter(id => id.toString() !== recipeId);
       await user.save();
-      res.json({ message: 'Removed from favorites', favorites: user.favorites, isFavorite: false });
+      res.json({ message: 'Removed from favorites', favorites: user.favorites.map(id => id.toString()), isFavorite: false });
     } else {
       user.favorites.push(recipeId);
       await user.save();
-      res.json({ message: 'Added to favorites', favorites: user.favorites, isFavorite: true });
+      res.json({ message: 'Added to favorites', favorites: user.favorites.map(id => id.toString()), isFavorite: true });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -132,6 +135,24 @@ router.get('/favorites', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id).populate('favorites');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ favorites: user.favorites });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /user/profile — permanently delete account and all associated data
+router.delete('/profile', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Delete all user's recipes, meal plans, then the user itself
+    await Promise.all([
+      Recipe.deleteMany({ user: userId }),
+      MealPlan.deleteMany({ user: userId }),
+    ]);
+    await User.findByIdAndDelete(userId);
+
+    res.json({ message: 'Account deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
