@@ -53,6 +53,78 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+
+// Generate shopping list from current week's meal plan
+router.get('/shopping-list', authMiddleware, async (req, res) => {
+  try {
+    const startDate = new Date(req.query.startDate);
+    if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
+    
+    const plan = await MealPlan.findOne({ user: req.user.id, startDate })
+    .populate('week.monday.Breakfast week.monday.Lunch week.monday.Dinner ' +
+      'week.tuesday.Breakfast week.tuesday.Lunch week.tuesday.Dinner ' +
+      'week.wednesday.Breakfast week.wednesday.Lunch week.wednesday.Dinner ' +
+      'week.thursday.Breakfast week.thursday.Lunch week.thursday.Dinner ' +
+      'week.friday.Breakfast week.friday.Lunch week.friday.Dinner ' +
+      'week.saturday.Breakfast week.saturday.Lunch week.saturday.Dinner ' +
+      'week.sunday.Breakfast week.sunday.Lunch week.sunday.Dinner');
+
+    if (!plan) return res.status(404).json({ message: 'No meal plan found for this week' });
+
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const slots = ['Breakfast', 'Lunch', 'Dinner'];
+
+    // Collect all unique recipes from the week
+    const recipeMap = new Map();
+    for (const day of days) {
+      for (const slot of slots) {
+        const recipe = plan.week[day][slot];
+        if (recipe && recipe._id) {
+          recipeMap.set(recipe._id.toString(), recipe);
+        }
+      }
+    }
+
+    // Merge ingredients across all recipes
+    const ingredientMap = new Map();
+    for (const recipe of recipeMap.values()) {
+      for (const ingredient of recipe.ingredients) {
+        const key = ingredient.name.toLowerCase().trim();
+        if (ingredientMap.has(key)) {
+          // If same ingredient appears in multiple recipes, add quantities
+          const existing = ingredientMap.get(key);
+          existing.quantity = (existing.quantity || 0) + (ingredient.quantity || 0);
+        } else {
+          ingredientMap.set(key, {
+            name: ingredient.name,
+            quantity: ingredient.quantity || 0,
+            unit: ingredient.unit || '',
+          });
+        }
+      }
+    }
+    
+    const ingredients = Array.from(ingredientMap.values());
+    
+    // Build recipes included summary
+    const recipesIncluded = Array.from(recipeMap.values()).map(r => ({
+      title: r.title,
+      servings: r.servings,
+      image: r.image || null,
+    }));
+    
+    res.json({
+      startDate,
+      ingredients,
+      recipesIncluded,
+      total: ingredients.length,
+    });
+    
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Assign recipe to a slot
 router.put('/:day/:slot', authMiddleware, async (req, res) => {
   try {
@@ -142,5 +214,4 @@ router.put('/', authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 module.exports = router;

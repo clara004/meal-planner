@@ -35,7 +35,6 @@ const generateDays = (mondayDate) => {
 
 const MEAL_SLOTS = ['Breakfast', 'Lunch', 'Dinner'];
 
-// initialise plan state
 const buildInitialPlan = () => {
   const plan = {};
   for (let i = 0; i < 7; i++) {
@@ -45,7 +44,6 @@ const buildInitialPlan = () => {
   return plan;
 };
 
-// ── Sub-components ────────────────────────────────────────────────────────────
 function RecipeCard({ recipe, onRemove }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -127,8 +125,6 @@ function DayColumn({ day, dayIndex, meals, onAdd, onRemove, isToday }) {
           Today
         </div>
       )}
-
-      {/* Day header */}
       <div style={{ textAlign: 'center', paddingTop: isToday ? '8px' : '0' }}>
         <p style={{
           fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700,
@@ -139,8 +135,6 @@ function DayColumn({ day, dayIndex, meals, onAdd, onRemove, isToday }) {
           color: '#707973', margin: 0
         }}>{day.date}</p>
       </div>
-
-      {/* Meal slots */}
       {MEAL_SLOTS.map(slot => (
         <div key={slot}>
           <p style={{
@@ -154,8 +148,6 @@ function DayColumn({ day, dayIndex, meals, onAdd, onRemove, isToday }) {
           }
         </div>
       ))}
-
-      {/* Daily total */}
       <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #e1e3e4' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
           <span style={{
@@ -178,8 +170,6 @@ function DayColumn({ day, dayIndex, meals, onAdd, onRemove, isToday }) {
   );
 }
 
-// ── Recipe Picker Modal ───────────────────────────────────────────────────────
-
 function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All');
@@ -201,22 +191,16 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
         maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 24px 60px rgba(0,0,0,0.2)'
       }} onClick={e => e.stopPropagation()}>
-
-        {/* Modal header */}
         <div style={{ padding: '20px 24px 0', borderBottom: '1px solid #e1e3e4', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
             <h3 style={{
               fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
               color: '#0f5238', margin: 0
             }}>Add Recipe — {slot?.label}</h3>
-            <button onClick={onClose} style={{
-              background: 'none', border: 'none',
-              cursor: 'pointer', color: '#707973'
-            }}>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#707973' }}>
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          {/* Search */}
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <span className="material-symbols-outlined" style={{
               position: 'absolute', left: '12px',
@@ -230,7 +214,6 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
                 fontFamily: 'Plus Jakarta Sans', fontSize: '14px', boxSizing: 'border-box'
               }} />
           </div>
-          {/* Filter chips */}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {filters.map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{
@@ -243,8 +226,6 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
             ))}
           </div>
         </div>
-
-        {/* Recipe grid */}
         <div style={{
           overflowY: 'auto', padding: '16px 24px', flex: 1,
           display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px'
@@ -278,12 +259,11 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
                   fontFamily: 'Plus Jakarta Sans', fontSize: '11px',
                   color: '#707973', margin: '0 0 8px'
                 }}>{recipe.kcal} kcal • {recipe.cuisine}</p>
-                <span
-                  style={{
-                    width: '100%', padding: '7px', background: '#0f5238', color: 'white',
-                    borderRadius: '8px', fontFamily: 'Plus Jakarta Sans', fontSize: '12px',
-                    fontWeight: 700, textAlign: 'center', marginTop: 'auto', display: 'block'
-                  }}>
+                <span style={{
+                  width: '100%', padding: '7px', background: '#0f5238', color: 'white',
+                  borderRadius: '8px', fontFamily: 'Plus Jakarta Sans', fontSize: '12px',
+                  fontWeight: 700, textAlign: 'center', marginTop: 'auto', display: 'block'
+                }}>
                   Add
                 </span>
               </div>
@@ -303,7 +283,6 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function MealPlanner() {
   const navigate = useNavigate();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()));
@@ -313,8 +292,7 @@ export default function MealPlanner() {
   const [allRecipes, setAllRecipes] = useState([]);
   const [suggested, setSuggested] = useState([]);
   const [filters, setFilters] = useState(['All']);
-  const [pickerSlot, setPickerSlot] = useState(null); // { dayIndex, label }
-  
+  const [pickerSlot, setPickerSlot] = useState(null);
   const weekLabel = `${days[0].date} – ${days[6].date}, ${currentWeekStart.getFullYear()}`;
   const [saved, setSaved] = useState(false);
   const [planError, setPlanError] = useState('');
@@ -323,10 +301,7 @@ export default function MealPlanner() {
     const loadData = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
+        if (!token) { navigate('/login'); return; }
 
         const recRes = await api.get('/recipes');
         const formattedRecipes = recRes.data.recipes.map(r => ({
@@ -349,9 +324,7 @@ export default function MealPlanner() {
         } catch (e) {
           if (e.response?.status === 404) {
             planRes = await api.post('/mealplan', { startDate: currentWeekStart.toISOString() });
-          } else {
-            throw e;
-          }
+          } else { throw e; }
         }
 
         const backendPlan = planRes.data.plan.week;
@@ -383,6 +356,7 @@ export default function MealPlanner() {
   const avgKcal = Math.round(totalKcal / 7);
 
   const handleAdd = (dayIndex, slot) => setPickerSlot({ dayIndex, label: slot });
+
   const findFirstEmptySlot = () => {
     for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
       for (const slot of MEAL_SLOTS) {
@@ -408,11 +382,12 @@ export default function MealPlanner() {
       setPlan(prev => ({ ...prev, [dayIndex]: { ...prev[dayIndex], [slot]: null } }));
     } catch (err) { console.error('Failed to remove recipe:', err); }
   };
+
   const handleSelect = async (recipe, targetSlot = pickerSlot) => {
     if (!targetSlot || targetSlot.dayIndex === null || targetSlot.dayIndex === undefined) return;
     try {
       setPlanError('');
-      await api.put(`/mealplan/${days[targetSlot.dayIndex].key}/${targetSlot.label}`, { 
+      await api.put(`/mealplan/${days[targetSlot.dayIndex].key}/${targetSlot.label}`, {
         recipeId: recipe.id,
         startDate: currentWeekStart.toISOString()
       });
@@ -426,6 +401,7 @@ export default function MealPlanner() {
       setPlanError(err.response?.data?.message || 'Could not add that meal. Please try again.');
     }
   };
+
   const handleClearWeek = async () => {
     try {
       for (let i = 0; i < 7; i++) {
@@ -436,9 +412,9 @@ export default function MealPlanner() {
       setPlan(buildInitialPlan());
     } catch (err) { console.error('Failed to clear week:', err); }
   };
+
   const handleSave = async () => {
     try {
-      // Build the week object mapping day keys to recipe IDs
       const week = {};
       days.forEach((d, i) => {
         week[d.key] = {};
@@ -446,12 +422,7 @@ export default function MealPlanner() {
           week[d.key][slot] = plan[i][slot]?.id || null;
         });
       });
-
-      await api.put('/mealplan', {
-        startDate: currentWeekStart.toISOString(),
-        week
-      });
-
+      await api.put('/mealplan', { startDate: currentWeekStart.toISOString(), week });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -473,61 +444,24 @@ export default function MealPlanner() {
         .reveal { opacity: 0; transform: translateY(60px) scale(0.98); transition: opacity 1.2s cubic-bezier(0.2, 1, 0.3, 1), transform 1.2s cubic-bezier(0.2, 1, 0.3, 1); will-change: transform, opacity; }
         .reveal.active { opacity: 1; transform: translateY(0) scale(1); }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-          background-color: #f8f9fa;
-          background-image: radial-gradient(#bfc9c1 0.5px, transparent 0.5px);
-          background-size: 24px 24px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        .mp-nav-link { font-family: 'Plus Jakarta Sans'; font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; transition: color 0.15s; }
-        .mp-nav-link:hover { color: #2d6a4f; }
-        .mp-nav-link.active { color: #2d6a4f; border-bottom: 2px solid #2d6a4f; padding-bottom: 2px; }
-        .mp-btn-ghost { background: none; border: none; cursor: pointer; font-family: 'Plus Jakarta Sans'; font-size: 14px; font-weight: 600; color: #1a4731; padding: 8px 20px; border-radius: '8px'; transition: background 0.15s; }
-        .mp-btn-ghost:hover { background: #f0faf5; border-radius: 8px; }
+        body { background-color: #f8f9fa; background-image: radial-gradient(#bfc9c1 0.5px, transparent 0.5px); background-size: 24px 24px; font-family: 'Plus Jakarta Sans', sans-serif; }
         .mp-suggested:hover { box-shadow: 0 8px 24px rgba(45,106,79,0.12); transform: translateY(-1px); }
         .mp-suggested { transition: all 0.15s; }
-        @media (max-width: 1024px) {
-          .mp-grid { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
-        }
-        @media (max-width: 640px) {
-          .mp-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
-          .mp-layout { flex-direction: column !important; }
-        }
+        @media (max-width: 1024px) { .mp-grid { grid-template-columns: repeat(4, minmax(0,1fr)) !important; } }
+        @media (max-width: 640px) { .mp-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } .mp-layout { flex-direction: column !important; } }
       `}</style>
 
-      {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
         <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          {/* Logo - Click to go Home */}
-          <div
-            onClick={() => navigate('/')}
-            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
-          >
+          <div onClick={() => navigate('/')} className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer">
             Vitality Kitchen
           </div>
-
           <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
             <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            <button
-              onClick={() => navigate('/recipes')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Recipes
-            </button>
-            <button
-              onClick={() => navigate('/meal-planner')}
-              className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
-            >
-              Meal Planner
-            </button>
-            <button
-              onClick={() => navigate('/grocery')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Grocery List
-            </button>
+            <button onClick={() => navigate('/recipes')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Recipes</button>
+            <button onClick={() => navigate('/meal-planner')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Meal Planner</button>
+            <button onClick={() => navigate(`/grocery?startDate=${currentWeekStart.toISOString()}`)} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
           </div>
-
           <div className="flex items-center gap-6">
             {localStorage.getItem('token') ? (
               <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
@@ -545,50 +479,30 @@ export default function MealPlanner() {
       </header>
 
       <main className={`reveal ${pageLoaded ? 'active' : ''}`} style={{ maxWidth: '1440px', margin: '0 auto', padding: '110px 48px 120px' }}>
-
-        {/* ── Page Header ── */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-          marginBottom: '32px', flexWrap: 'wrap', gap: '16px'
-        }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <h1 style={{
-              fontFamily: 'Lexend', fontSize: '32px', fontWeight: 700,
-              color: '#0f5238', marginBottom: '12px', letterSpacing: '-0.01em'
-            }}>Weekly Meal Plan</h1>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px', background: 'white',
-              padding: '8px 16px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(45,106,79,0.06)',
-              width: 'fit-content'
-            }}>
+            <h1 style={{ fontFamily: 'Lexend', fontSize: '32px', fontWeight: 700, color: '#0f5238', marginBottom: '12px', letterSpacing: '-0.01em' }}>Weekly Meal Plan</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '8px 16px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(45,106,79,0.06)', width: 'fit-content' }}>
               <button onClick={() => {
                 const prev = new Date(currentWeekStart);
                 prev.setDate(prev.getDate() - 7);
                 setCurrentWeekStart(prev);
-              }} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: '#707973',
-                display: 'flex', alignItems: 'center'
-              }}>
+              }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#707973', display: 'flex', alignItems: 'center' }}>
                 <span className="material-symbols-outlined">chevron_left</span>
               </button>
-              <span style={{
-                fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                color: '#191c1d', minWidth: '160px', textAlign: 'center'
-              }}>{weekLabel}</span>
+              <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700, color: '#191c1d', minWidth: '160px', textAlign: 'center' }}>{weekLabel}</span>
               <button onClick={() => {
                 const next = new Date(currentWeekStart);
                 next.setDate(next.getDate() + 7);
                 setCurrentWeekStart(next);
-              }} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: '#707973',
-                display: 'flex', alignItems: 'center'
-              }}>
+              }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#707973', display: 'flex', alignItems: 'center' }}>
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => navigate('/grocery')}
+            {/* ← FIXED: now passes startDate */}
+            <button onClick={() => navigate(`/grocery?startDate=${currentWeekStart.toISOString()}`)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px', padding: '11px 22px',
                 background: '#fd9d1a', color: '#2c1700', border: 'none', borderRadius: '10px',
@@ -606,57 +520,32 @@ export default function MealPlanner() {
                 fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s',
                 boxShadow: '0 2px 8px rgba(15,82,56,0.25)'
               }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {saved ? 'check' : 'save'}
-              </span>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{saved ? 'check' : 'save'}</span>
               {saved ? 'Saved!' : 'Save Plan'}
             </button>
           </div>
         </div>
 
-        {/* ── Main Layout ── */}
         {planError && (
-          <div style={{
-            marginBottom: '18px', padding: '12px 16px', background: '#ffdad6',
-            color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans',
-            fontSize: '13px', fontWeight: 700
-          }}>
+          <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#ffdad6', color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700 }}>
             {planError}
           </div>
         )}
 
         <div className="mp-layout" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-
-          {/* 7-day grid */}
           <div style={{ flexGrow: 1, overflowX: 'auto', paddingBottom: '8px' }}>
-            <div className="mp-grid" style={{
-              display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0,1fr))',
-              gap: '12px', minWidth: '900px'
-            }}>
+            <div className="mp-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0,1fr))', gap: '12px', minWidth: '900px' }}>
               {days.map((day, i) => (
-                <DayColumn key={i} day={day} dayIndex={i} meals={plan[i]}
-                  onAdd={handleAdd} onRemove={handleRemove} isToday={day.today} />
+                <DayColumn key={i} day={day} dayIndex={i} meals={plan[i]} onAdd={handleAdd} onRemove={handleRemove} isToday={day.today} />
               ))}
             </div>
           </div>
 
-          {/* Sidebar */}
           <aside style={{ width: '280px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* Nutrition summary */}
-            <div style={{
-              background: 'white', borderRadius: '18px', padding: '22px',
-              boxShadow: '0 4px 20px rgba(45,106,79,0.06)', border: '1px solid #ecfdf5'
-            }}>
-              <h2 style={{
-                fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700,
-                color: '#0f5238', marginBottom: '16px'
-              }}>Nutrition Summary</h2>
+            <div style={{ background: 'white', borderRadius: '18px', padding: '22px', boxShadow: '0 4px 20px rgba(45,106,79,0.06)', border: '1px solid #ecfdf5' }}>
+              <h2 style={{ fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700, color: '#0f5238', marginBottom: '16px' }}>Nutrition Summary</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-                {[
-                  ['Weekly Total', `${totalKcal.toLocaleString()} kcal`],
-                  ['Daily Average', `${avgKcal.toLocaleString()} kcal`],
-                ].map(([label, value]) => (
+                {[['Weekly Total', `${totalKcal.toLocaleString()} kcal`], ['Daily Average', `${avgKcal.toLocaleString()} kcal`]].map(([label, value]) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', color: '#707973' }}>{label}</span>
                     <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700, color: '#0f5238' }}>{value}</span>
@@ -665,16 +554,10 @@ export default function MealPlanner() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 {[['#2d6a4f', 'Protein'], ['#fd9d1a', 'Carbs'], ['#57624e', 'Fat']].map(([c, l]) => (
-                  <span key={l} style={{
-                    fontFamily: 'Plus Jakarta Sans', fontSize: '10px',
-                    fontWeight: 800, color: c, textTransform: 'uppercase', letterSpacing: '0.05em'
-                  }}>{l}</span>
+                  <span key={l} style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '10px', fontWeight: 800, color: c, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{l}</span>
                 ))}
               </div>
-              <div style={{
-                height: '10px', width: '100%', display: 'flex',
-                borderRadius: '9999px', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
-              }}>
+              <div style={{ height: '10px', width: '100%', display: 'flex', borderRadius: '9999px', overflow: 'hidden', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)' }}>
                 <div style={{ width: '30%', background: '#2d6a4f', height: '100%' }} />
                 <div style={{ width: '50%', background: '#fd9d1a', height: '100%' }} />
                 <div style={{ width: '20%', background: '#57624e', height: '100%' }} />
@@ -686,36 +569,17 @@ export default function MealPlanner() {
               </div>
             </div>
 
-            {/* Suggested recipes */}
             <div>
-              <h2 style={{
-                fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700,
-                color: '#0f5238', marginBottom: '14px'
-              }}>Suggested for You</h2>
+              <h2 style={{ fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700, color: '#0f5238', marginBottom: '14px' }}>Suggested for You</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {suggested.map(r => (
-                  <div key={r.name} className="mp-suggested"
-                    style={{
-                      display: 'flex', gap: '12px', background: 'white', padding: '12px',
-                      borderRadius: '14px', boxShadow: '0 4px 16px rgba(45,106,79,0.06)', alignItems: 'center'
-                    }}>
-                    <img src={r.img} alt={r.name}
-                      style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
+                  <div key={r.name} className="mp-suggested" style={{ display: 'flex', gap: '12px', background: 'white', padding: '12px', borderRadius: '14px', boxShadow: '0 4px 16px rgba(45,106,79,0.06)', alignItems: 'center' }}>
+                    <img src={r.img} alt={r.name} style={{ width: '56px', height: '56px', borderRadius: '10px', objectFit: 'cover', flexShrink: 0 }} />
                     <div style={{ flexGrow: 1, minWidth: 0 }}>
-                      <p style={{
-                        fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
-                        color: '#191c1d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                      }}>{r.name}</p>
-                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', color: '#707973' }}>
-                        {r.kcal} kcal • {r.time}
-                      </p>
+                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700, color: '#191c1d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</p>
+                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', color: '#707973' }}>{r.kcal} kcal • {r.time}</p>
                     </div>
-                    <button onClick={() => handleSuggestedAdd(r)}
-                      style={{
-                        background: '#f0faf5', color: '#0f5238', border: 'none',
-                        borderRadius: '8px', padding: '7px', cursor: 'pointer', flexShrink: 0,
-                        display: 'flex', alignItems: 'center', transition: 'all 0.15s'
-                      }}>
+                    <button onClick={() => handleSuggestedAdd(r)} style={{ background: '#f0faf5', color: '#0f5238', border: 'none', borderRadius: '8px', padding: '7px', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
                     </button>
                   </div>
@@ -726,8 +590,7 @@ export default function MealPlanner() {
         </div>
       </main>
 
-      {/* ── Bottom Sticky Bar ── */}
-            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
             <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
@@ -746,43 +609,22 @@ export default function MealPlanner() {
         </div>
       </footer>
 
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-        background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #e1e3e4', boxShadow: '0 -4px 20px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{
-          maxWidth: '1440px', margin: '0 auto', padding: '0 48px',
-          height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-        }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40, background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)', borderTop: '1px solid #e1e3e4', boxShadow: '0 -4px 20px rgba(0,0,0,0.05)' }}>
+        <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '0 48px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: '48px', alignItems: 'center' }}>
-            {[['Week Total', `${totalKcal.toLocaleString()} kcal`],
-            ['Daily Average', `${avgKcal.toLocaleString()} kcal`]].map(([l, v]) => (
+            {[['Week Total', `${totalKcal.toLocaleString()} kcal`], ['Daily Average', `${avgKcal.toLocaleString()} kcal`]].map(([l, v]) => (
               <div key={l}>
-                <div style={{
-                  fontFamily: 'Plus Jakarta Sans', fontSize: '9px', fontWeight: 800,
-                  color: '#707973', textTransform: 'uppercase', letterSpacing: '0.08em'
-                }}>{l}</div>
-                <div style={{
-                  fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                  color: '#0f5238'
-                }}>{v}</div>
+                <div style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '9px', fontWeight: 800, color: '#707973', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{l}</div>
+                <div style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700, color: '#0f5238' }}>{v}</div>
               </div>
             ))}
           </div>
-          <button onClick={handleClearWeek}
-            style={{
-              padding: '8px 20px', borderRadius: '8px', border: '1.5px solid #bfc9c1',
-              background: 'none', color: '#707973', cursor: 'pointer',
-              fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-              transition: 'all 0.15s'
-            }}>
+          <button onClick={handleClearWeek} style={{ padding: '8px 20px', borderRadius: '8px', border: '1.5px solid #bfc9c1', background: 'none', color: '#707973', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700, transition: 'all 0.15s' }}>
             Clear Week
           </button>
         </div>
       </div>
 
-      {/* ── Recipe Picker Modal ── */}
       {pickerSlot && (
         <RecipePickerModal
           slot={pickerSlot}
