@@ -21,11 +21,14 @@ export default function GroceryList() {
   useEffect(() => {
     const fetchShoppingList = async () => {
       try {
-        const startDate = searchParams.get('startDate');
+        let startDate = searchParams.get('startDate');
         if (!startDate) {
-          setError('No meal plan selected. Go to Meal Planner and click Generate Shopping List.');
-          setLoading(false);
-          return;
+          const date = new Date();
+          const day = date.getDay();
+          const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+          date.setDate(diff);
+          date.setHours(0, 0, 0, 0);
+          startDate = date.toISOString();
         }
         const res = await api.get(`/mealplan/shopping-list?startDate=${startDate}`);
         setIngredients(res.data.ingredients);
