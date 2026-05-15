@@ -1,13 +1,54 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useFormik, FormikProvider } from 'formik';
 import * as Yup from 'yup';
 import api from '../utils/api';
 
+const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
+
+const estimateDataUrlBytes = (dataUrl) => {
+  const base64 = dataUrl.split(',')[1] || '';
+  return Math.ceil((base64.length * 3) / 4);
+};
+
+const buildImageDataUrl = (img, maxSide, quality) => {
+  const canvas = document.createElement('canvas');
+  let w = img.width;
+  let h = img.height;
+
+  if (w > maxSide || h > maxSide) {
+    if (w > h) {
+      h = Math.round((h * maxSide) / w);
+      w = maxSide;
+    } else {
+      w = Math.round((w * maxSide) / h);
+      h = maxSide;
+    }
+  }
+
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL('image/jpeg', quality);
+};
+
+const emptyRecipeForm = {
+  title: '',
+  category: '',
+  cookTime: '',
+  servings: '',
+  ingredients: [{ name: '', calories: '' }],
+  instructions: '',
+  dietaryTags: [],
+};
+
 const CreateRecipe = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const [fallingItems, setFallingItems] = useState([]);
   const [submitError, setSubmitError] = useState('');
+  const [loadingRecipe, setLoadingRecipe] = useState(Boolean(id));
   const [imagePreview, setImagePreview] = useState(null);
   const [imageData, setImageData] = useState('');
   const fileInputRef = React.useRef(null);
@@ -21,17 +62,24 @@ const CreateRecipe = () => {
     reader.onload = (ev) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX = 800;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
+        let maxSide = 720;
+        let quality = 0.7;
+        let compressed = buildImageDataUrl(img, maxSide, quality);
+
+        while (estimateDataUrlBytes(compressed) > MAX_IMAGE_BYTES && maxSide > 360) {
+          maxSide = Math.round(maxSide * 0.8);
+          quality = Math.max(0.5, quality - 0.08);
+          compressed = buildImageDataUrl(img, maxSide, quality);
         }
-        canvas.width = w;
-        canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL('image/jpeg', 0.8);
+
+        if (estimateDataUrlBytes(compressed) > MAX_IMAGE_BYTES) {
+          setSubmitError('That image is too large to save. Please choose a smaller photo.');
+          setImagePreview(null);
+          setImageData('');
+          return;
+        }
+
+        setSubmitError('');
         setImagePreview(compressed);
         setImageData(compressed);
       };
@@ -63,24 +111,26 @@ const CreateRecipe = () => {
   };
 
   const formik = useFormik({
-    initialValues: {
-      title: '',
-      category: '',
-      cookTime: '',
-      servings: '',
-      instructions: '',
-      dietaryTags: [],
-    },
+    initialValues: emptyRecipeForm,
     validationSchema: Yup.object({
       title: Yup.string().required('Title is required'),
       category: Yup.string().required('Category is required'),
       instructions: Yup.string().required('Instructions are required'),
       servings: Yup.number().min(1).required('Servings is required'),
+      ingredients: Yup.array()
+        .of(Yup.object({
+          name: Yup.string().required('Ingredient name is required'),
+          calories: Yup.number()
+            .typeError('Kcal must be a number')
+            .min(0, 'Kcal cannot be negative')
+            .required('Kcal is required'),
+        }))
+        .min(1, 'Add at least one ingredient'),
     }),
     onSubmit: async (values) => {
       setSubmitError('');
       try {
-        await api.post('/recipes', {
+        const payload = {
           title: values.title,
           category: values.category,
           prepTime: Number(values.cookTime) || 0,
@@ -89,17 +139,109 @@ const CreateRecipe = () => {
           steps: values.instructions
             .split('\n')
             .filter(s => s.trim()),
-          ingredients: [],
+          ingredients: values.ingredients
+            .filter(ingredient => ingredient.name.trim())
+            .map(ingredient => ({
+              name: ingredient.name.trim(),
+              calories: Number(ingredient.calories) || 0,
+            })),
           image: imageData || '',
-        });
+        };
+
+        if (isEditMode) {
+          await api.put(`/recipes/${id}`, payload);
+        } else {
+          await api.post('/recipes', payload);
+        }
         triggerBurst();
-        setTimeout(() => { navigate('/recipes'); }, 2500);
+        setTimeout(() => { navigate(isEditMode ? '/profile' : '/recipes'); }, 2500);
       } catch (err) {
-        setSubmitError('Failed to save recipe. Make sure you are logged in.');
+        if (err.response?.status === 401) {
+          setSubmitError('Your session expired. Please log in again before saving.');
+        } else if (err.response?.data?.message) {
+          setSubmitError(err.response.data.message);
+        } else if (err.response?.status) {
+          setSubmitError(`Failed to save recipe. Server returned ${err.response.status}.`);
+        } else if (err.request) {
+          setSubmitError('Failed to save recipe. The app could not reach the backend server.');
+        } else {
+          setSubmitError(err.message || 'Failed to save recipe. Please check the form and try again.');
+        }
         console.error('Failed:', err);
       }
     },
   });
+  const { setValues } = formik;
+
+  useEffect(() => {
+    if (!id) {
+      setLoadingRecipe(false);
+      return;
+    }
+
+    const fetchRecipe = async () => {
+      try {
+        const res = await api.get(`/recipes/${id}`);
+        const recipe = res.data.recipe;
+        const ingredients = recipe.ingredients?.length
+          ? recipe.ingredients.map(ingredient => ({
+              name: ingredient.name || '',
+              calories: ingredient.calories ?? '',
+            }))
+          : [{ name: '', calories: '' }];
+
+        setValues({
+          title: recipe.title || '',
+          category: recipe.category || '',
+          cookTime: recipe.prepTime ?? recipe.cookTime ?? '',
+          servings: recipe.servings ?? '',
+          ingredients,
+          instructions: (recipe.steps || []).join('\n'),
+          dietaryTags: recipe.dietaryTags || [],
+        });
+        setImagePreview(recipe.image || null);
+        setImageData(recipe.image || '');
+      } catch (err) {
+        if (err.response?.status === 401) {
+          setSubmitError('Your session expired. Please log in again before editing.');
+        } else {
+          setSubmitError(err.response?.data?.message || 'Could not load this recipe for editing.');
+        }
+      } finally {
+        setLoadingRecipe(false);
+      }
+    };
+
+    fetchRecipe();
+  }, [id, setValues]);
+
+  const totalIngredientCalories = formik.values.ingredients.reduce(
+    (sum, ingredient) => sum + (Number(ingredient.calories) || 0),
+    0
+  );
+
+  const addIngredient = () => {
+    formik.setFieldValue('ingredients', [
+      ...formik.values.ingredients,
+      { name: '', calories: '' },
+    ]);
+  };
+
+  const removeIngredient = (index) => {
+    const nextIngredients = formik.values.ingredients.filter((_, i) => i !== index);
+    formik.setFieldValue(
+      'ingredients',
+      nextIngredients.length ? nextIngredients : [{ name: '', calories: '' }]
+    );
+  };
+
+  if (loadingRecipe) {
+    return (
+      <div className="bg-[#f8f9fa] font-['Plus_Jakarta_Sans'] text-[#0f5238] min-h-screen flex items-center justify-center">
+        <p className="font-['Lexend'] text-xl font-bold">Loading recipe...</p>
+      </div>
+    );
+  }
 
   return (
     <FormikProvider value={formik}>
@@ -153,8 +295,8 @@ const CreateRecipe = () => {
             <img alt="banner" className="w-full h-full object-cover"
               src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2000&auto=format&fit=crop" />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center bg-black/40 px-6">
-              <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-white tracking-tighter leading-tight">Create Your Masterpiece</h1>
-              <p className="text-white/90 text-lg mt-4 font-medium max-w-2xl">Share your nutritional wisdom and culinary creativity with the Vitality community.</p>
+              <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-white tracking-tighter leading-tight">{isEditMode ? 'Edit Your Recipe' : 'Create Your Masterpiece'}</h1>
+              <p className="text-white/90 text-lg mt-4 font-medium max-w-2xl">{isEditMode ? 'Update the details, ingredients, and instructions for this recipe.' : 'Share your nutritional wisdom and culinary creativity with the Vitality community.'}</p>
             </div>
           </div>
 
@@ -257,6 +399,82 @@ const CreateRecipe = () => {
                 </div>
 
                 <section>
+                  <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
+                    <div>
+                      <h3 className="font-['Lexend'] text-[24px] font-[800] text-[#064e3b] mb-2">Ingredients & Calories *</h3>
+                      <p className="text-stone-400 text-sm">Add each ingredient and its kcal amount. The recipe total is calculated automatically.</p>
+                    </div>
+                    <div className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-emerald-50 min-w-[170px]">
+                      <p className="text-[10px] font-[800] text-stone-400 uppercase tracking-[0.16em]">Total kcal</p>
+                      <p className="font-['Lexend'] text-2xl font-[800] text-[#0f5238] leading-tight">{totalIngredientCalories.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {formik.values.ingredients.map((ingredient, index) => {
+                      const nameError = formik.touched.ingredients?.[index]?.name && formik.errors.ingredients?.[index]?.name;
+                      const caloriesError = formik.touched.ingredients?.[index]?.calories && formik.errors.ingredients?.[index]?.calories;
+
+                      return (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_160px_44px] gap-3 items-start">
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.name`}>Ingredient name</label>
+                            <input
+                              id={`ingredients.${index}.name`}
+                              name={`ingredients.${index}.name`}
+                              value={ingredient.name}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="Ingredient name"
+                            />
+                            {nameError && <p className="text-red-500 text-xs mt-2 ml-3">{nameError}</p>}
+                          </div>
+
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.calories`}>Ingredient kcal</label>
+                            <input
+                              id={`ingredients.${index}.calories`}
+                              name={`ingredients.${index}.calories`}
+                              type="number"
+                              min="0"
+                              value={ingredient.calories}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="kcal"
+                            />
+                            {caloriesError && <p className="text-red-500 text-xs mt-2 ml-3">{caloriesError}</p>}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => removeIngredient(index)}
+                            className="w-11 h-11 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-all flex items-center justify-center md:mt-1"
+                            aria-label="Remove ingredient"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {typeof formik.errors.ingredients === 'string' && (
+                    <p className="text-red-500 text-xs mt-3 ml-4">{formik.errors.ingredients}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={addIngredient}
+                    className="mt-5 bg-white text-[#0f5238] px-6 py-3 rounded-full font-bold text-sm shadow-sm hover:bg-emerald-50 transition-all flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Add Ingredient
+                  </button>
+                </section>
+
+                <section>
                   <h3 className="font-['Lexend'] text-[24px] font-[800] text-[#064e3b] mb-3">Cooking Instructions *</h3>
                   <p className="text-stone-400 text-sm mb-4">Write each step on a new line.</p>
                   <textarea name="instructions" value={formik.values.instructions} onChange={formik.handleChange} onBlur={formik.handleBlur}
@@ -266,11 +484,11 @@ const CreateRecipe = () => {
                 </section>
 
                 <div className="pt-6 border-t border-stone-100 flex flex-col md:flex-row justify-between items-center gap-6">
-                  <button type="button" onClick={() => navigate('/recipes')} className="text-stone-400 font-bold hover:text-stone-600 transition-colors px-6">Discard Changes</button>
+                  <button type="button" onClick={() => navigate(isEditMode ? '/profile' : '/recipes')} className="text-stone-400 font-bold hover:text-stone-600 transition-colors px-6">Discard Changes</button>
                   <button type="submit" disabled={formik.isSubmitting}
                     className="bg-[#0f5238] text-white px-14 py-5 pill-button font-[800] text-lg shadow-2xl hover:scale-105 transition-all flex items-center gap-3 active:scale-95"
                     style={{ opacity: formik.isSubmitting ? 0.7 : 1 }}>
-                    {formik.isSubmitting ? 'Saving...' : 'Save Recipe'}
+                    {formik.isSubmitting ? 'Saving...' : isEditMode ? 'Update Recipe' : 'Save Recipe'}
                     <span className="material-symbols-outlined">check_circle</span>
                   </button>
                 </div>
@@ -279,15 +497,24 @@ const CreateRecipe = () => {
           </div>
         </main>
 
-        <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
-          <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
+              <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex flex-col items-center md:items-start gap-6">
             <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <div className="flex gap-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined text-xl">share</span></div>
-              <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined text-xl">mail</span></div>
-            </div>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
-        </footer>
+          <div className="flex flex-wrap justify-center gap-10">
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
+            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
+          </div>
+        </div>
+      </footer>
       </div>
     </FormikProvider>
   );

@@ -6,6 +6,10 @@ const recipeSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  isUserCreated: {
+    type: Boolean,
+    default: true
+  },
   title: {
     type: String,
     required: true
