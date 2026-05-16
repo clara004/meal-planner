@@ -88,30 +88,142 @@ Ensure you have Node.js and MongoDB installed on your system.
    ```
 
 ## API Reference
-The backend exposes a RESTful API on `http://localhost:5000/api`. Most routes require a Bearer token in the `Authorization` header.
 
-* **Auth**: 
-  * `POST /auth/register` - Create a new account
-  * `POST /auth/login` - Authenticate and receive JWT
-* **User**: 
-  * `GET /user/profile` - Get current user profile and stats
-  * `PUT /user/profile` - Update user details and dietary preferences
-  * `GET /user/favorites` - Get populated favorite recipes
-  * `POST /user/favorites/:recipeId` - Add a recipe to favorites
-  * `DELETE /user/favorites/:recipeId` - Remove a recipe from favorites
-  * `DELETE /user/account` - Permanently delete account and associated data
-* **Recipes**: 
-  * `GET /recipes` - Fetch all public recipes
-  * `GET /recipes/:id` - Get a specific recipe
-  * `POST /recipes` - Create a new recipe
-  * `PUT /recipes/:id` - Update a recipe
-  * `DELETE /recipes/:id` - Delete a recipe
-  * `POST /recipes/:id/rate` - Submit a star rating
-* **Meal Plans**: 
-  * `GET /meal-plans` - Get all meal plans for the user
-  * `GET /meal-plans/week` - Get the meal plan for a specific week (`?startDate=YYYY-MM-DD`)
-  * `POST /meal-plans` - Save or update a weekly meal plan
-  * `GET /meal-plans/grocery-list` - Generate grocery list between two dates
+**Description**: The Vitality Kitchen REST API enables full interaction with user accounts, recipes, favorites, and weekly meal planning logic.
+**Base URL**: `http://localhost:5000/api`
+
+### Common Error Codes
+* **400 Bad Request**: Missing or invalid parameters.
+* **401 Unauthorized**: Missing or invalid JWT Bearer token.
+* **404 Not Found**: The requested resource (e.g., Recipe ID) does not exist.
+* **500 Internal Server Error**: A server-side error occurred.
+
+---
+
+### 1. Authentication
+#### `POST /auth/login`
+* **Description**: Authenticates a user and returns a JWT token.
+* **Parameters (Body)**:
+  * `email` (string, required): User's email address.
+  * `password` (string, required): User's password.
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5c...",
+    "user": { "id": "60d5ec...", "name": "John Doe", "email": "john@example.com" }
+  }
+  ```
+
+---
+
+### 2. User & Profile
+#### `GET /user/profile`
+* **Description**: Retrieves the current logged-in user's profile and application statistics.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters**: None.
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "user": { "name": "John Doe", "dietary_prefs": ["Vegan"] },
+    "stats": { "recipesCreated": 5, "mealsPlanned": 12, "recipesRated": 3 },
+    "mealPlans": [ /* Array of saved plans */ ]
+  }
+  ```
+
+#### `POST /user/favorites/:recipeId`
+* **Description**: Adds a specific recipe to the user's favorites list.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters (Path)**:
+  * `recipeId` (string, required): The MongoDB ID of the recipe.
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "message": "Added to favorites",
+    "favorites": ["60d5ec...", "60d5ed..."],
+    "isFavorite": true
+  }
+  ```
+
+#### `DELETE /user/favorites/:recipeId`
+* **Description**: Removes a specific recipe from the user's favorites list unconditionally.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters (Path)**:
+  * `recipeId` (string, required): The MongoDB ID of the recipe.
+* **Response**: `200 OK`
+
+---
+
+### 3. Recipes
+#### `POST /recipes`
+* **Description**: Creates a new user-generated recipe with automatically calculated nutritional values.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters (Body)**:
+  * `title` (string, required)
+  * `category` (string, required)
+  * `cuisine` (string, required)
+  * `ingredients` (array of objects, required): Must contain `name`, `quantity`, `unit`, and `calories`.
+  * `steps` (array of strings, required)
+* **Response**: `201 Created`
+* **Example**:
+  ```json
+  {
+    "message": "Recipe created successfully",
+    "recipe": { "_id": "60d5ef...", "title": "Mango Bowl", "totalNutrition": { "calories": 450 } }
+  }
+  ```
+
+#### `GET /recipes`
+* **Description**: Fetches a list of all available recipes (both system-seeded and public user-created).
+* **Parameters**: None.
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "recipes": [
+      { "_id": "60d5ef...", "title": "Mango Bowl", "averageRating": 4.5 }
+    ]
+  }
+  ```
+
+---
+
+### 4. Meal Planning
+#### `POST /meal-plans`
+* **Description**: Saves or updates a weekly meal plan for the user.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters (Body)**:
+  * `startDate` (string, required): ISO date string representing Monday of the given week.
+  * `days` (array, required): Array of 7 day objects, each containing arrays for `breakfast`, `lunch`, `dinner`, and `snacks` with corresponding recipe IDs.
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "message": "Meal plan updated successfully",
+    "mealPlan": { "startDate": "2026-05-18T00:00:00.000Z", "days": [ ... ] }
+  }
+  ```
+
+#### `GET /meal-plans/grocery-list`
+* **Description**: Aggregates all ingredients required for meals planned within a specific date range.
+* **Headers**: `Authorization: Bearer <token>`
+* **Parameters (Query)**:
+  * `start` (string, required): Start date (YYYY-MM-DD).
+  * `end` (string, required): End date (YYYY-MM-DD).
+* **Response**: `200 OK`
+* **Example**:
+  ```json
+  {
+    "startDate": "2026-05-18",
+    "endDate": "2026-05-24",
+    "groceryList": [
+      { "name": "Mango", "totalQuantity": 2, "unit": "piece" },
+      { "name": "Quinoa", "totalQuantity": 3, "unit": "cup" }
+    ]
+  }
+  ```
 
 ## Tests
 The backend features an extensive test suite built with **Jest** and **Supertest** using an in-memory MongoDB server to ensure tests run quickly and cleanly without affecting your actual local database.
@@ -132,4 +244,4 @@ npm test
 7. Visit the **Profile** tab to manage your dietary preferences, view your saved meal plans, review your favorites, and track your app statistics.
 
 ## Credits
-Designed and developed as a modern, agentic-assisted coding project utilizing the MERN stack. Icons provided by Google Material Symbols and images sourced via Unsplash.
+Designed and developed as a modern, coding project utilizing the MERN stack by students at Ain Shams University - Faculty of Computer and Information Science 2026. Icons provided by Google Material Symbols and images sourced via Unsplash.
