@@ -3,14 +3,36 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const MealPlan = require('../models/MealPlan');
 
+const createEmptyWeek = () => {
+  const emptyDay = { Breakfast: null, Lunch: null, Dinner: null };
+  return {
+    monday: { ...emptyDay }, tuesday: { ...emptyDay }, wednesday: { ...emptyDay },
+    thursday: { ...emptyDay }, friday: { ...emptyDay }, saturday: { ...emptyDay }, sunday: { ...emptyDay }
+  };
+};
+
+// Normalize to midnight UTC so timezone offsets never cause duplicate documents
+const toUTCMidnight = (d) => {
+  const date = new Date(d);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+};
+
 // Create empty weekly plan
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const plan = new MealPlan({
-      user: req.user.id,
-      week: { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] }
+    const startDate = toUTCMidnight(req.body.startDate);
+    if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
+
+    const plan = await MealPlan.findOneAndUpdate({ user: req.user.id, startDate }, {
+      $setOnInsert: {
+        user: req.user.id,
+        startDate,
+        week: createEmptyWeek()
+      }
+    }, {
+      new: true,
+      upsert: true
     });
-    await plan.save();
     res.status(201).json({ message: 'Meal plan created', plan });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -20,42 +42,182 @@ router.post('/', authMiddleware, async (req, res) => {
 // Get user's meal plan
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const plan = await MealPlan.findOne({ user: req.user.id })
-      .populate('week.monday week.tuesday week.wednesday week.thursday week.friday week.saturday week.sunday');
+    const startDate = toUTCMidnight(req.query.startDate);
+    if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
+
+    const plan = await MealPlan.findOne({ user: req.user.id, startDate })
+      .populate('week.monday.Breakfast week.monday.Lunch week.monday.Dinner ' +
+                'week.tuesday.Breakfast week.tuesday.Lunch week.tuesday.Dinner ' +
+                'week.wednesday.Breakfast week.wednesday.Lunch week.wednesday.Dinner ' +
+                'week.thursday.Breakfast week.thursday.Lunch week.thursday.Dinner ' +
+                'week.friday.Breakfast week.friday.Lunch week.friday.Dinner ' +
+                'week.saturday.Breakfast week.saturday.Lunch week.saturday.Dinner ' +
+                'week.sunday.Breakfast week.sunday.Lunch week.sunday.Dinner');
     res.json({ plan });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Assign recipe to a day
-router.put('/:day', authMiddleware, async (req, res) => {
+
+// Generate shopping list from current week's meal plan
+router.get('/shopping-list', authMiddleware, async (req, res) => {
   try {
-    const { day } = req.params;
-    const { recipeId } = req.body;
-    const plan = await MealPlan.findOne({ user: req.user.id });
+    const startDate = toUTCMidnight(req.query.startDate);
+    if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
+    
+    const plan = await MealPlan.findOne({ user: req.user.id, startDate })
+    .populate('week.monday.Breakfast week.monday.Lunch week.monday.Dinner ' +
+      'week.tuesday.Breakfast week.tuesday.Lunch week.tuesday.Dinner ' +
+      'week.wednesday.Breakfast week.wednesday.Lunch week.wednesday.Dinner ' +
+      'week.thursday.Breakfast week.thursday.Lunch week.thursday.Dinner ' +
+      'week.friday.Breakfast week.friday.Lunch week.friday.Dinner ' +
+      'week.saturday.Breakfast week.saturday.Lunch week.saturday.Dinner ' +
+      'week.sunday.Breakfast week.sunday.Lunch week.sunday.Dinner');
+
+    if (!plan) return res.status(404).json({ message: 'No meal plan found for this week' });
+
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const slots = ['Breakfast', 'Lunch', 'Dinner'];
+
+    // Collect all unique recipes from the week
+    const recipeMap = new Map();
+    for (const day of days) {
+      for (const slot of slots) {
+        const recipe = plan.week[day][slot];
+        if (recipe && recipe._id) {
+          recipeMap.set(recipe._id.toString(), recipe);
+        }
+      }
+    }
+
+    // Merge ingredients across all recipes
+    const ingredientMap = new Map();
+    for (const recipe of recipeMap.values()) {
+      for (const ingredient of recipe.ingredients) {
+        const key = ingredient.name.toLowerCase().trim();
+        if (ingredientMap.has(key)) {
+          // If same ingredient appears in multiple recipes, add quantities
+          const existing = ingredientMap.get(key);
+          existing.quantity = (existing.quantity || 0) + (ingredient.quantity || 0);
+        } else {
+          ingredientMap.set(key, {
+            name: ingredient.name,
+            quantity: ingredient.quantity || 0,
+            unit: ingredient.unit || '',
+          });
+        }
+      }
+    }
+    
+    const ingredients = Array.from(ingredientMap.values());
+    
+    // Build recipes included summary
+    const recipesIncluded = Array.from(recipeMap.values()).map(r => ({
+      title: r.title,
+      servings: r.servings,
+      image: r.image || null,
+    }));
+    
+    res.json({
+      startDate,
+      ingredients,
+      recipesIncluded,
+      total: ingredients.length,
+    });
+    
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Assign recipe to a slot
+router.put('/:day/:slot', authMiddleware, async (req, res) => {
+  try {
+    const { day, slot } = req.params;
+    const { recipeId, startDate } = req.body;
+
+    const parsedDate = toUTCMidnight(startDate);
+    if (isNaN(parsedDate)) return res.status(400).json({ message: 'Valid startDate required' });
+
+    const emptyWeek = createEmptyWeek();
+    if (!emptyWeek[day]) return res.status(400).json({ message: 'Invalid day' });
+    if (emptyWeek[day][slot] === undefined) return res.status(400).json({ message: 'Invalid slot' });
+
+    let plan = await MealPlan.findOne({ user: req.user.id, startDate: parsedDate });
+    if (!plan) {
+      plan = new MealPlan({ user: req.user.id, startDate: parsedDate, week: emptyWeek });
+    }
+
+    // Fix for legacy schema where week days were arrays
+    if (Array.isArray(plan.week[day]) || Array.isArray(plan.week.monday)) {
+      await MealPlan.findByIdAndDelete(plan._id);
+      plan = new MealPlan({ user: req.user.id, startDate: parsedDate, week: emptyWeek });
+    }
+
+    plan.week[day][slot] = recipeId;
+    plan.markModified(`week.${day}.${slot}`);
+    await plan.save();
+    res.json({ message: `Recipe added to ${day} ${slot}`, plan });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Clear a slot
+router.delete('/:day/:slot', authMiddleware, async (req, res) => {
+  try {
+    const { day, slot } = req.params;
+    const startDate = toUTCMidnight(req.query.startDate);
+    if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
+
+    const plan = await MealPlan.findOne({ user: req.user.id, startDate });
     if (!plan) return res.status(404).json({ message: 'Meal plan not found' });
+    
+    // Fix for legacy schema where week days were arrays
+    if (Array.isArray(plan.week[day]) || Array.isArray(plan.week.monday)) {
+      await MealPlan.findByIdAndDelete(plan._id);
+      plan = new MealPlan({ user: req.user.id, startDate, week: createEmptyWeek() });
+    }
+
     if (!plan.week[day]) return res.status(400).json({ message: 'Invalid day' });
-    plan.week[day].push(recipeId);
+    if (plan.week[day][slot] === undefined) return res.status(400).json({ message: 'Invalid slot' });
+
+    plan.week[day][slot] = null;
     await plan.save();
-    res.json({ message: `Recipe added to ${day}`, plan });
+    res.json({ message: `${day} ${slot} cleared`, plan });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Clear a day
-router.delete('/:day', authMiddleware, async (req, res) => {
+// Bulk save entire week plan
+router.put('/', authMiddleware, async (req, res) => {
   try {
-    const { day } = req.params;
-    const plan = await MealPlan.findOne({ user: req.user.id });
-    if (!plan) return res.status(404).json({ message: 'Meal plan not found' });
-    plan.week[day] = [];
+    const { startDate, week } = req.body;
+    const parsedDate = toUTCMidnight(startDate);
+    if (isNaN(parsedDate)) return res.status(400).json({ message: 'Valid startDate required' });
+
+    let plan = await MealPlan.findOne({ user: req.user.id, startDate: parsedDate });
+    if (!plan) {
+      plan = new MealPlan({ user: req.user.id, startDate: parsedDate, week: createEmptyWeek() });
+    }
+
+    const dayKeys = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const slotKeys = ['Breakfast', 'Lunch', 'Dinner'];
+
+    for (const day of dayKeys) {
+      for (const slot of slotKeys) {
+        const recipeId = week?.[day]?.[slot] || null;
+        plan.week[day][slot] = recipeId;
+        plan.markModified(`week.${day}.${slot}`);
+      }
+    }
+
     await plan.save();
-    res.json({ message: `${day} cleared`, plan });
+    res.json({ message: 'Meal plan saved', plan });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
-
 module.exports = router;

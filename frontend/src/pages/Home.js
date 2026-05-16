@@ -50,8 +50,6 @@ const Home = () => {
           
           <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
             <button onClick={() => navigate('/')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Home</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Plans</button>
-            
             {/* Recipes Nav Link */}
             <button 
               onClick={() => navigate('/recipes')} 
@@ -59,14 +57,32 @@ const Home = () => {
             >
               Recipes
             </button>
-            
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
-            <button className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Community</button>
+            <button 
+              onClick={() => navigate('/meal-planner')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Meal Planner
+            </button>
+            <button 
+              onClick={() => navigate('/grocery')} 
+              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
+            >
+              Grocery List
+            </button>
           </div>
 
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-            <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all">Get Started</button>
+            {localStorage.getItem('token') ? (
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+                <span className="material-symbols-outlined text-sm">person</span>
+                Profile
+              </button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all">Get Started</button>
+              </>
+            )}
           </div>
         </nav>
       </header>
@@ -82,7 +98,7 @@ const Home = () => {
               </div>
               
               <h1 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] max-w-4xl tracking-tighter leading-[1.1]">
-                Fuel Your Vitality with <span className="text-[#0f5238] italic">Every Bite</span>
+                Fuel your vitality with <span className="text-[#0f5238] italic">every bite</span>
               </h1>
               
               <p className="text-[18px] text-stone-600 max-w-2xl mx-auto leading-relaxed">
@@ -192,26 +208,21 @@ const Home = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] tracking-tight cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2024 Vitality Kitchen.</p>
+            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
+            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-10">
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
             <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">FAQ</button>
           </div>
           <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 hover:bg-[#0f5238] hover:text-white shadow-sm transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-xl">share</span>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 hover:bg-[#0f5238] hover:text-white shadow-sm transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-xl">mail</span>
-            </div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
           </div>
         </div>
       </footer>
