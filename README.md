@@ -132,5 +132,5 @@ npm test
 7. Visit the **Profile** tab to manage your dietary preferences, view your saved meal plans, review your favorites, and track your app statistics.
 
 ## Credits
-Designed and developed as a modern, coding project utilizing the MERN stack by students of Ain Shams University - Faculty of Computers and Information 2026. Icons provided by Google Material Symbols and images sourced via Unsplash.
+Designed and developed as a modern, coding project utilizing the MERN stack by students at Ain Shams University - Faculty of Computer and Information Science 2026. Icons provided by Google Material Symbols and images sourced via Unsplash.
 
