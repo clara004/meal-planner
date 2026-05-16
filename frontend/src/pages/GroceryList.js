@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../utils/api";
 import html2pdf from "html2pdf.js";
+import { getMonday } from "../utils/dateUtils";
 
 export default function GroceryList() {
   const navigate = useNavigate();
@@ -22,13 +23,15 @@ export default function GroceryList() {
     const fetchShoppingList = async () => {
       try {
         let startDate = searchParams.get('startDate');
+        
         if (!startDate) {
-          const date = new Date();
-          const day = date.getDay();
-          const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-          date.setDate(diff);
-          date.setHours(0, 0, 0, 0);
-          startDate = date.toISOString();
+          startDate = localStorage.getItem('lastMealPlanDate');
+        }
+
+        if (!startDate) {
+          startDate = getMonday(new Date()).toISOString();
+        } else {
+          localStorage.setItem('lastMealPlanDate', startDate);
         }
         const res = await api.get(`/mealplan/shopping-list?startDate=${startDate}`);
         setIngredients(res.data.ingredients);
@@ -191,7 +194,7 @@ export default function GroceryList() {
                       </span>
                     </label>
                     <span style={{ fontSize: 12, fontWeight: 700, color: checked[i] ? "#c4c9c3" : "#6b7280", background: checked[i] ? "#fafafa" : "#f3f4f5", padding: "4px 12px", borderRadius: 9999, whiteSpace: "nowrap" }}>
-                      {item.quantity} {item.unit}
+                      {item.quantity > 0 ? `${item.quantity} ${item.unit || ''}` : item.unit || ''}
                     </span>
                   </li>
                 ))}

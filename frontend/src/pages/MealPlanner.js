@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-
-const getMonday = (d) => {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  date.setDate(diff);
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
+import { getMonday } from '../utils/dateUtils';
 
 const generateDays = (mondayDate) => {
   const days = [];
@@ -285,7 +277,18 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
 
 export default function MealPlanner() {
   const navigate = useNavigate();
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()));
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const saved = localStorage.getItem('lastMealPlanDate');
+    if (saved) {
+      const d = new Date(saved);
+      if (!isNaN(d.getTime())) return getMonday(d);
+    }
+    return getMonday(new Date());
+  });
+
+  useEffect(() => {
+    localStorage.setItem('lastMealPlanDate', currentWeekStart.toISOString());
+  }, [currentWeekStart]);
   const days = generateDays(currentWeekStart);
 
   const [plan, setPlan] = useState(buildInitialPlan());

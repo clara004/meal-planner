@@ -1,0 +1,32 @@
+STEP-BY-STEP GUIDE: FIXING GROCERY LIST PERSISTENCE & INGREDIENT MEASUREMENTS
+
+1. CREATE A DATE UTILITY (Consistent week calculation)
+   - File: frontend/src/utils/dateUtils.js
+   - Action: Create this file and add a 'getMonday' function. This ensures that 'Monday' is always calculated the same way across the whole app, preventing bugs where the Meal Planner and Grocery List look at different days.
+
+2. UPDATE RECIPE CREATION (Add Qty and Unit fields)
+   - File: frontend/src/pages/CreateRecipe.js
+   - Action: 
+     - Update the 'emptyRecipeForm' to include 'quantity' and 'unit' for ingredients.
+     - Update the Validation Schema (Yup) to require these fields.
+     - Update the UI (the HTML/JSX part) to add two new <input> boxes for every ingredient row.
+     - Update the 'onSubmit' function to send these new fields to your backend.
+
+3. SYNC THE MEAL PLANNER (Save selected week)
+   - File: frontend/src/pages/MealPlanner.js
+   - Action:
+     - Use 'useEffect' to save 'currentWeekStart' to 'localStorage' every time it changes.
+     - When the page first loads, check 'localStorage' to see if a week was previously selected. If yes, load it.
+
+4. UPDATE THE GROCERY LIST (Display units and load saved week)
+   - File: frontend/src/pages/GroceryList.js
+   - Action:
+     - In 'fetchShoppingList', first check if there is a 'startDate' in the URL.
+     - If not, check 'localStorage' for the last saved week.
+     - If still not found, default to the current week's Monday.
+     - In the ingredient list display, change '{item.name}' to include '{item.quantity} {item.unit}'.
+
+5. UPDATE RECIPE DETAILS (Display units)
+   - File: frontend/src/pages/RecipeDetail.js
+   - Action:
+     - Update the ingredient loop to show the quantity and unit next to the ingredient name.

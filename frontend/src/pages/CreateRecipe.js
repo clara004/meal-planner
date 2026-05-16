@@ -37,7 +37,7 @@ const emptyRecipeForm = {
   category: '',
   cookTime: '',
   servings: '',
-  ingredients: [{ name: '', calories: '' }],
+  ingredients: [{ name: '', quantity: '', unit: '', calories: '' }],
   instructions: '',
   dietaryTags: [],
 };
@@ -120,6 +120,11 @@ const CreateRecipe = () => {
       ingredients: Yup.array()
         .of(Yup.object({
           name: Yup.string().required('Ingredient name is required'),
+          quantity: Yup.number()
+            .typeError('Quantity must be a number')
+            .min(0, 'Quantity cannot be negative')
+            .required('Qty is required'),
+          unit: Yup.string().required('Unit is required'),
           calories: Yup.number()
             .typeError('Kcal must be a number')
             .min(0, 'Kcal cannot be negative')
@@ -143,6 +148,8 @@ const CreateRecipe = () => {
             .filter(ingredient => ingredient.name.trim())
             .map(ingredient => ({
               name: ingredient.name.trim(),
+              quantity: Number(ingredient.quantity) || 0,
+              unit: ingredient.unit.trim(),
               calories: Number(ingredient.calories) || 0,
             })),
           image: imageData || '',
@@ -186,9 +193,11 @@ const CreateRecipe = () => {
         const ingredients = recipe.ingredients?.length
           ? recipe.ingredients.map(ingredient => ({
               name: ingredient.name || '',
+              quantity: ingredient.quantity ?? '',
+              unit: ingredient.unit || '',
               calories: ingredient.calories ?? '',
             }))
-          : [{ name: '', calories: '' }];
+          : [{ name: '', quantity: '', unit: '', calories: '' }];
 
         setValues({
           title: recipe.title || '',
@@ -223,7 +232,7 @@ const CreateRecipe = () => {
   const addIngredient = () => {
     formik.setFieldValue('ingredients', [
       ...formik.values.ingredients,
-      { name: '', calories: '' },
+      { name: '', quantity: '', unit: '', calories: '' },
     ]);
   };
 
@@ -231,7 +240,7 @@ const CreateRecipe = () => {
     const nextIngredients = formik.values.ingredients.filter((_, i) => i !== index);
     formik.setFieldValue(
       'ingredients',
-      nextIngredients.length ? nextIngredients : [{ name: '', calories: '' }]
+      nextIngredients.length ? nextIngredients : [{ name: '', quantity: '', unit: '', calories: '' }]
     );
   };
 
@@ -416,7 +425,7 @@ const CreateRecipe = () => {
                       const caloriesError = formik.touched.ingredients?.[index]?.calories && formik.errors.ingredients?.[index]?.calories;
 
                       return (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_160px_44px] gap-3 items-start">
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_100px_100px_120px_44px] gap-3 items-start">
                           <div>
                             <label className="sr-only" htmlFor={`ingredients.${index}.name`}>Ingredient name</label>
                             <input
@@ -426,13 +435,47 @@ const CreateRecipe = () => {
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
                               className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
-                              placeholder="Ingredient name"
+                              placeholder="Ingredient"
                             />
                             {nameError && <p className="text-red-500 text-xs mt-2 ml-3">{nameError}</p>}
                           </div>
 
                           <div>
-                            <label className="sr-only" htmlFor={`ingredients.${index}.calories`}>Ingredient kcal</label>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.quantity`}>Qty</label>
+                            <input
+                              id={`ingredients.${index}.quantity`}
+                              name={`ingredients.${index}.quantity`}
+                              type="number"
+                              min="0"
+                              value={ingredient.quantity}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="Qty"
+                            />
+                            {formik.touched.ingredients?.[index]?.quantity && formik.errors.ingredients?.[index]?.quantity && (
+                              <p className="text-red-500 text-[10px] mt-1 ml-2">{formik.errors.ingredients[index].quantity}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.unit`}>Unit</label>
+                            <input
+                              id={`ingredients.${index}.unit`}
+                              name={`ingredients.${index}.unit`}
+                              value={ingredient.unit}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="Unit (g, ml...)"
+                            />
+                            {formik.touched.ingredients?.[index]?.unit && formik.errors.ingredients?.[index]?.unit && (
+                              <p className="text-red-500 text-[10px] mt-1 ml-2">{formik.errors.ingredients[index].unit}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.calories`}>kcal</label>
                             <input
                               id={`ingredients.${index}.calories`}
                               name={`ingredients.${index}.calories`}
@@ -441,10 +484,10 @@ const CreateRecipe = () => {
                               value={ingredient.calories}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
-                              className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
                               placeholder="kcal"
                             />
-                            {caloriesError && <p className="text-red-500 text-xs mt-2 ml-3">{caloriesError}</p>}
+                            {caloriesError && <p className="text-red-500 text-[10px] mt-1 ml-2">{caloriesError}</p>}
                           </div>
 
                           <button
