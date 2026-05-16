@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">69.23% </span>
+                <span class="strong">68.04% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>63/91</span>
+                <span class='fraction'>66/97</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">44.44% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>18/36</span>
+                <span class='fraction'>16/36</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.33% </span>
+                <span class="strong">53.84% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/12</span>
+                <span class='fraction'>7/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">76.82% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>60/75</span>
+                <span class='fraction'>63/82</span>
             </div>
         
             
@@ -224,7 +224,18 @@
 <a name='L159'></a><a href='#L159'>159</a>
 <a name='L160'></a><a href='#L160'>160</a>
 <a name='L161'></a><a href='#L161'>161</a>
-<a name='L162'></a><a href='#L162'>162</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -241,6 +252,9 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -250,8 +264,15 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -259,6 +280,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -401,20 +423,30 @@ router.get('/profile', authMiddleware, async (req, res) =&gt; {
     // Aggregate stats
     const recipesCreated = await Recipe.countDocuments({ user: req.user.id });
 &nbsp;
-    // Count meals currently planned
-    const plan = await MealPlan.findOne({ user: req.user.id });
+    // Count meals currently planned across all plans
+    const plans = await MealPlan.find({ user: req.user.id }).sort({ startDate: -1 });
     let mealsPlanned = 0;
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (plan &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >plan.week)</span> {
-      const days = <span class="cstat-no" title="statement not covered" >['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];</span>
-      const slots = <span class="cstat-no" title="statement not covered" >['Breakfast','Lunch','Dinner'];</span>
-<span class="cstat-no" title="statement not covered" >      days.forEach(<span class="fstat-no" title="function not covered" >da</span>y =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >        if (plan.week[day]) {</span>
-<span class="cstat-no" title="statement not covered" >          slots.forEach(<span class="fstat-no" title="function not covered" >sl</span>ot =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >            if (plan.week[day][slot]) <span class="cstat-no" title="statement not covered" >mealsPlanned++;</span></span>
-          });
-        }
-      });
-    }
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const slots = ['Breakfast','Lunch','Dinner'];
+    const activePlans = [];
+    plans.forEach(<span class="fstat-no" title="function not covered" >pl</span>an =&gt; {
+      let planMealCount = <span class="cstat-no" title="statement not covered" >0;</span>
+<span class="cstat-no" title="statement not covered" >      if (plan.week) {</span>
+<span class="cstat-no" title="statement not covered" >        days.forEach(<span class="fstat-no" title="function not covered" >da</span>y =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >          if (plan.week[day]) {</span>
+<span class="cstat-no" title="statement not covered" >            slots.forEach(<span class="fstat-no" title="function not covered" >sl</span>ot =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >              if (plan.week[day][slot]) {</span>
+<span class="cstat-no" title="statement not covered" >                mealsPlanned++;</span>
+<span class="cstat-no" title="statement not covered" >                planMealCount++;</span>
+              }
+            });
+          }
+        });
+      }
+<span class="cstat-no" title="statement not covered" >      if (planMealCount &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >        activePlans.push(plan);</span>
+      }
+    });
 &nbsp;
     // Count recipes this user has rated
     const recipesRated = await Recipe.countDocuments({ 'ratings.user': req.user.id });
@@ -434,7 +466,8 @@ router.get('/profile', authMiddleware, async (req, res) =&gt; {
         recipesCreated,
         mealsPlanned,
         recipesRated,
-      }
+      },
+      mealPlans: activePlans
     });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    res.status(500).json({ message: err.message });</span>
@@ -553,7 +586,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-15T17:32:21.888Z
+                at 2026-05-16T08:34:44.558Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

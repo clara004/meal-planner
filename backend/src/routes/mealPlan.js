@@ -11,10 +11,16 @@ const createEmptyWeek = () => {
   };
 };
 
+// Normalize to midnight UTC so timezone offsets never cause duplicate documents
+const toUTCMidnight = (d) => {
+  const date = new Date(d);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+};
+
 // Create empty weekly plan
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const startDate = new Date(req.body.startDate);
+    const startDate = toUTCMidnight(req.body.startDate);
     if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
 
     const plan = await MealPlan.findOneAndUpdate({ user: req.user.id, startDate }, {
@@ -36,7 +42,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // Get user's meal plan
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
 
     const plan = await MealPlan.findOne({ user: req.user.id, startDate })
@@ -57,7 +63,7 @@ router.get('/', authMiddleware, async (req, res) => {
 // Generate shopping list from current week's meal plan
 router.get('/shopping-list', authMiddleware, async (req, res) => {
   try {
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
     
     const plan = await MealPlan.findOne({ user: req.user.id, startDate })
@@ -131,7 +137,7 @@ router.put('/:day/:slot', authMiddleware, async (req, res) => {
     const { day, slot } = req.params;
     const { recipeId, startDate } = req.body;
 
-    const parsedDate = new Date(startDate);
+    const parsedDate = toUTCMidnight(startDate);
     if (isNaN(parsedDate)) return res.status(400).json({ message: 'Valid startDate required' });
 
     const emptyWeek = createEmptyWeek();
@@ -162,7 +168,7 @@ router.put('/:day/:slot', authMiddleware, async (req, res) => {
 router.delete('/:day/:slot', authMiddleware, async (req, res) => {
   try {
     const { day, slot } = req.params;
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     if (isNaN(startDate)) return res.status(400).json({ message: 'Valid startDate required' });
 
     const plan = await MealPlan.findOne({ user: req.user.id, startDate });
@@ -189,7 +195,7 @@ router.delete('/:day/:slot', authMiddleware, async (req, res) => {
 router.put('/', authMiddleware, async (req, res) => {
   try {
     const { startDate, week } = req.body;
-    const parsedDate = new Date(startDate);
+    const parsedDate = toUTCMidnight(startDate);
     if (isNaN(parsedDate)) return res.status(400).json({ message: 'Valid startDate required' });
 
     let plan = await MealPlan.findOne({ user: req.user.id, startDate: parsedDate });

@@ -60,7 +60,9 @@ describe('API Endpoints', () => {
         select: jest.fn().mockResolvedValue({ _id: 'user123', name: 'Test', createdAt: new Date() })
       });
       Recipe.countDocuments.mockResolvedValue(2);
-      MealPlan.findOne.mockResolvedValue(null);
+      MealPlan.find.mockReturnValue({
+        sort: jest.fn().mockResolvedValue([])
+      });
 
       const res = await request(app).get('/api/user/profile');
       expect(res.statusCode).toBe(200);
@@ -268,7 +270,7 @@ describe('API Endpoints', () => {
       const res = await request(app)
         .put('/api/user/profile/avatar')
         .send({ avatar: largeString });
-        
+
       expect(res.statusCode).toBe(413);
       expect(res.body.message).toMatch(/too large/i);
     }, 10000); // give it more time if string generation is slow

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
 
 const getMonday = (d) => {
@@ -294,7 +294,12 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
 
 export default function MealPlanner() {
   const navigate = useNavigate();
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => getMonday(new Date()));
+  const location = useLocation();
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    const startDateParam = params.get('startDate');
+    return startDateParam ? new Date(startDateParam) : getMonday(new Date());
+  });
   const days = generateDays(currentWeekStart);
 
   const [plan, setPlan] = useState(buildInitialPlan());
@@ -305,6 +310,19 @@ export default function MealPlanner() {
   const weekLabel = `${days[0].date} – ${days[6].date}, ${currentWeekStart.getFullYear()}`;
   const [saved, setSaved] = useState(false);
   const [planError, setPlanError] = useState('');
+  const [lastSavedStr, setLastSavedStr] = useState('');
+  const [modal, setModal] = useState(null); // { type: 'info'|'success', title, message }
+
+  const getPlanIdStr = (p) => {
+    let s = '';
+    for (let i = 0; i < 7; i++) {
+      for (const slot of MEAL_SLOTS) {
+        s += p[i][slot]?.id || 'null';
+        s += ',';
+      }
+    }
+    return s;
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -356,6 +374,7 @@ export default function MealPlanner() {
           });
         });
         setPlan(newPlan);
+        setLastSavedStr(getPlanIdStr(newPlan));
       } catch (err) {
         console.error('Failed to load meal plan data:', err);
       }
@@ -425,6 +444,24 @@ export default function MealPlanner() {
   };
 
   const handleSave = async () => {
+    let hasMeals = false;
+    for (let i = 0; i < 7; i++) {
+      for (const slot of MEAL_SLOTS) {
+        if (plan[i][slot]) hasMeals = true;
+      }
+    }
+
+    if (!hasMeals) {
+      setModal({ type: 'info', title: 'No Meals Added', message: 'There are no meals in this week to save. Add at least one recipe before saving.' });
+      return;
+    }
+
+    const currentStr = getPlanIdStr(plan);
+    if (currentStr === lastSavedStr) {
+      setModal({ type: 'info', title: 'Already Saved', message: "This week's plan is already up to date — no changes to save." });
+      return;
+    }
+
     try {
       const week = {};
       days.forEach((d, i) => {
@@ -435,6 +472,8 @@ export default function MealPlanner() {
       });
       await api.put('/mealplan', { startDate: currentWeekStart.toISOString(), week });
       setSaved(true);
+      setLastSavedStr(currentStr);
+      setModal({ type: 'success', title: 'Plan Saved!', message: `Your meal plan for the week of ${days[0].date} has been saved to your profile.` });
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
       console.error('Failed to save plan:', err);
@@ -537,11 +576,54 @@ export default function MealPlanner() {
           </div>
         </div>
 
-        {planError && (
-          <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#ffdad6', color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700 }}>
-            {planError}
+      {/* ── Themed Modal Dialog ── */}
+      {modal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '24px'
+        }} onClick={() => setModal(null)}>
+          <div style={{
+            background: 'white', borderRadius: '20px', padding: '32px',
+            maxWidth: '420px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
+            display: 'flex', flexDirection: 'column', gap: '16px'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
+                background: modal.type === 'success' ? '#b1f0ce' : '#e8f5e9',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span className="material-symbols-outlined" style={{
+                  fontSize: '26px',
+                  color: modal.type === 'success' ? '#0f5238' : '#2d6a4f',
+                  fontVariationSettings: '"FILL" 1'
+                }}>
+                  {modal.type === 'success' ? 'check_circle' : 'info'}
+                </span>
+              </div>
+              <div>
+                <h3 style={{ fontFamily: 'Lexend', fontSize: '17px', fontWeight: 700, color: '#0f5238', margin: 0 }}>{modal.title}</h3>
+              </div>
+            </div>
+            <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px', color: '#404943', lineHeight: 1.6, margin: 0 }}>
+              {modal.message}
+            </p>
+            <button onClick={() => setModal(null)} style={{
+              alignSelf: 'flex-end', padding: '10px 28px', background: '#0f5238', color: 'white',
+              border: 'none', borderRadius: '10px', cursor: 'pointer',
+              fontFamily: 'Lexend', fontSize: '13px', fontWeight: 700,
+              boxShadow: '0 4px 12px rgba(15,82,56,0.25)'
+            }}>OK</button>
           </div>
-        )}
+        </div>
+      )}
+
+      {planError && (
+        <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#ffdad6', color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700 }}>
+          {planError}
+        </div>
+      )}
 
         <div className="mp-layout" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
           <div style={{ flexGrow: 1, overflowX: 'auto', paddingBottom: '8px' }}>

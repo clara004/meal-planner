@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useFavorites } from '../context/FavoritesContext';
 
 const RECIPES_PER_PAGE = 12;
 
 const Recipes = () => {
   const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Recipes");
   const [currentPage, setCurrentPage] = useState(1);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fallingItems, setFallingItems] = useState([]);
-  const [favorites, setFavorites] = useState([]);
 
   const handleCreateClick = () => {
     const veggieImages = [
@@ -39,19 +40,10 @@ const Recipes = () => {
     setTimeout(() => { setFallingItems((prev) => prev.slice(12)); }, 3000);
   };
 
-  const toggleFavorite = async (recipeId) => {
+  const handleToggleFavorite = async (recipeId) => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/login'); return; }
-    try {
-      const res = await api.post(`/user/favorites/${recipeId}`);
-      if (res.data.isFavorite) {
-        setFavorites(prev => Array.from(new Set([...prev, recipeId])));
-      } else {
-        setFavorites(prev => prev.filter(id => id !== recipeId));
-      }
-    } catch (err) {
-      console.error('Failed to toggle favorite:', err);
-    }
+    await toggleFavorite(recipeId);
   };
 
   useEffect(() => {
@@ -59,15 +51,6 @@ const Recipes = () => {
       try {
         const res = await api.get('/recipes');
         setRecipes(res.data.recipes);
-
-        // Load user favorites if logged in
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const favRes = await api.get('/user/favorites');
-            setFavorites(favRes.data.favorites.map(f => f._id || f));
-          } catch (e) { /* not logged in or error */ }
-        }
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
       } finally {
@@ -213,7 +196,10 @@ const Recipes = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {paginatedRecipes.map(recipe => (
-                <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} isFavorite={favorites.includes(recipe._id)} onToggleFavorite={() => toggleFavorite(recipe._id)} />
+                <RecipeCard key={recipe._id} recipe={recipe}
+                  onClick={() => navigate(`/recipes/${recipe._id}`)}
+                  isFavorite={isFavorite(recipe._id)}
+                  onToggleFavorite={() => handleToggleFavorite(recipe._id)} />
               ))}
             </div>
 

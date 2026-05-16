@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.17% </span>
+                <span class="strong">72.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>83/115</span>
+                <span class='fraction'>86/118</span>
             </div>
         
             
@@ -37,16 +37,16 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/8</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.37% </span>
+                <span class="strong">81.9% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>83/102</span>
+                <span class='fraction'>86/105</span>
             </div>
         
             
@@ -280,7 +280,13 @@
 <a name='L215'></a><a href='#L215'>215</a>
 <a name='L216'></a><a href='#L216'>216</a>
 <a name='L217'></a><a href='#L217'>217</a>
-<a name='L218'></a><a href='#L218'>218</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -291,6 +297,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -510,10 +522,16 @@ const createEmptyWeek = () =&gt; {
   };
 };
 &nbsp;
+// Normalize to midnight UTC so timezone offsets never cause duplicate documents
+const toUTCMidnight = (d) =&gt; {
+  const date = new Date(d);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+};
+&nbsp;
 // Create empty weekly plan
 router.post('/', authMiddleware, async (req, res) =&gt; {
   try {
-    const startDate = new Date(req.body.startDate);
+    const startDate = toUTCMidnight(req.body.startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(startDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
 &nbsp;
     const plan = await MealPlan.findOneAndUpdate({ user: req.user.id, startDate }, {
@@ -535,7 +553,7 @@ router.post('/', authMiddleware, async (req, res) =&gt; {
 // Get user's meal plan
 router.get('/', authMiddleware, async (req, res) =&gt; {
   try {
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(startDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
 &nbsp;
     const plan = await MealPlan.findOne({ user: req.user.id, startDate })
@@ -556,7 +574,7 @@ router.get('/', authMiddleware, async (req, res) =&gt; {
 // Generate shopping list from current week's meal plan
 router.get('/shopping-list', authMiddleware, async (req, res) =&gt; {
   try {
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(startDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
     
     const plan = await MealPlan.findOne({ user: req.user.id, startDate })
@@ -630,7 +648,7 @@ router.put('/:day/:slot', authMiddleware, async (req, res) =&gt; {
     const { day, slot } = req.params;
     const { recipeId, startDate } = req.body;
 &nbsp;
-    const parsedDate = new Date(startDate);
+    const parsedDate = toUTCMidnight(startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(parsedDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
 &nbsp;
     const emptyWeek = createEmptyWeek();
@@ -661,7 +679,7 @@ router.put('/:day/:slot', authMiddleware, async (req, res) =&gt; {
 router.delete('/:day/:slot', authMiddleware, async (req, res) =&gt; {
   try {
     const { day, slot } = req.params;
-    const startDate = new Date(req.query.startDate);
+    const startDate = toUTCMidnight(req.query.startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(startDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
 &nbsp;
     const plan = await MealPlan.findOne({ user: req.user.id, startDate });
@@ -688,7 +706,7 @@ router.delete('/:day/:slot', authMiddleware, async (req, res) =&gt; {
 router.put('/', authMiddleware, async (req, res) =&gt; {
   try {
     const { startDate, week } = req.body;
-    const parsedDate = new Date(startDate);
+    const parsedDate = toUTCMidnight(startDate);
     <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(parsedDate)) <span class="cstat-no" title="statement not covered" >return res.status(400).json({ message: 'Valid startDate required' });</span>
 &nbsp;
     let plan = await MealPlan.findOne({ user: req.user.id, startDate: parsedDate });
@@ -721,7 +739,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-05-15T17:32:21.888Z
+                at 2026-05-16T08:34:44.558Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

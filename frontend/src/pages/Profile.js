@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import api from '../utils/api';
+import { useFavorites } from '../context/FavoritesContext';
 
 const ALL_PREFS = ['Vegan', 'Gluten-Free', 'Keto', 'Paleo', 'High-Protein', 'Dairy-Free', 'Nut-Free'];
 
@@ -56,7 +57,7 @@ function Stars({ rating }) {
 }
 
 // ── Recipe Card ───────────────────────────────────────────────────────────────
-function RecipeCard({ recipe, onDelete, onRemoveFavorite, navigate }) {
+function RecipeCard({ recipe, onDelete, onRemoveFavorite, navigate, isRemoving }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const isEditable = Boolean(onDelete);
   const isFavoriteCard = Boolean(onRemoveFavorite);
@@ -89,13 +90,21 @@ function RecipeCard({ recipe, onDelete, onRemoveFavorite, navigate }) {
             {isEditable ? 'Edit' : 'View'}
           </button>
           {isFavoriteCard ? (
-            <button onClick={() => onRemoveFavorite(recipe._id || recipe.id)}
-              style={{ flex: 1, padding: '8px', background: '#ffdad6', color: '#93000a',
-                border: 'none', borderRadius: '8px', cursor: 'pointer',
+            <button
+              onClick={() => !isRemoving && onRemoveFavorite(recipe._id || recipe.id)}
+              disabled={isRemoving}
+              style={{ flex: 1, padding: '8px',
+                background: isRemoving ? '#f1f3f5' : '#ffdad6',
+                color: isRemoving ? '#aaa' : '#93000a',
+                border: 'none', borderRadius: '8px',
+                cursor: isRemoving ? 'default' : 'pointer',
                 fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '15px', fontVariationSettings: '"FILL" 1' }}>favorite</span>
-              Remove
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                transition: 'all 0.15s' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', fontVariationSettings: '"FILL" 1' }}>
+                {isRemoving ? 'hourglass_empty' : 'favorite'}
+              </span>
+              {isRemoving ? 'Removing…' : 'Remove'}
             </button>
           ) : confirmDelete ? (
             <div style={{ flex: 1, display: 'flex', gap: '4px' }}>
@@ -170,10 +179,14 @@ export default function Profile() {
   const [stats, setStats]         = useState({ recipesCreated: 0, mealsPlanned: 0, recipesRated: 0 });
   const [loading, setLoading]     = useState(true);
   const [editMode, setEditMode]   = useState(false);
-  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'recipes' | 'favorites'
+  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'recipes' | 'favorites' | 'plans'
   const [recipes, setRecipes]     = useState([]);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+  const [mealPlans, setMealPlans] = useState([]);
+  const [removingFavoriteIds, setRemovingFavoriteIds] = useState(new Set());
   const [savedMsg, setSavedMsg]   = useState(false);
+  const { removeFavorite } = useFavorites();
+
   const [selectedPrefs, setSelectedPrefs] = useState([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef(null);
@@ -186,7 +199,7 @@ export default function Profile() {
     return () => clearTimeout(timer);
   }, []);
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = async (silent = false) => {
     try {
       const [profileRes, recipesRes, favoritesRes] = await Promise.all([
         api.get('/user/profile'),
@@ -206,7 +219,8 @@ export default function Profile() {
       setStats(profileRes.data.stats);
       setRecipes(recipesRes.data.recipes || []);
       setFavoriteRecipes(favoritesRes.data.favorites || []);
-      setLoading(false);
+      setMealPlans(profileRes.data.mealPlans || []);
+      if (!silent) setLoading(false);
     } catch (error) {
       console.error(error);
       if (error.response?.status === 401) {
@@ -266,18 +280,19 @@ export default function Profile() {
   };
 
   const handleRemoveFavorite = async (id) => {
-    // Optimistically remove from local state first for instant feedback
-    setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id)?.toString() !== id?.toString()));
-    setUser(prev => ({
-      ...prev,
-      favorites: (prev?.favorites || []).filter(favId => favId?.toString() !== id?.toString())
-    }));
+    const idStr = id?.toString();
+    if (removingFavoriteIds.has(idStr)) return;
+
+    setRemovingFavoriteIds(prev => new Set([...prev, idStr]));
     try {
-      await api.post(`/user/favorites/${id}`);
+      // Goes through context — updates shared state so Recipes page heart syncs instantly
+      await removeFavorite(idStr);
+      // Remove from this page's local favoriteRecipes list
+      setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id)?.toString() !== idStr));
     } catch (err) {
       console.error('Failed to remove favorite:', err);
-      // Re-fetch to restore correct state on error
-      fetchProfileData();
+    } finally {
+      setRemovingFavoriteIds(prev => { const s = new Set(prev); s.delete(idStr); return s; });
     }
   };
 
@@ -544,8 +559,11 @@ export default function Profile() {
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #e1e3e4',
                 marginBottom: '24px' }}>
-                {[['info','My Info'],['recipes','My Recipes'],['favorites','Favorites']].map(([key, label]) => (
-                  <button key={key} onClick={() => setActiveTab(key)}
+                {[['info','My Info'],['recipes','My Recipes'],['favorites','Favorites'],['plans','My Plans']].map(([key, label]) => (
+                  <button key={key} onClick={() => {
+                    setActiveTab(key);
+                    if (key === 'plans') fetchProfileData(true);
+                  }}
                     style={{ padding: '12px 24px', background: 'none', border: 'none',
                       cursor: 'pointer', fontFamily: 'Lexend', fontSize: '14px',
                       fontWeight: activeTab === key ? 700 : 500,
@@ -802,7 +820,12 @@ export default function Profile() {
                       style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px' }}>
                       {favoriteRecipes.map(r => (
                         <div key={r._id || r.id} className="pf-recipe-card">
-                          <RecipeCard recipe={r} onRemoveFavorite={handleRemoveFavorite} navigate={navigate} />
+                          <RecipeCard
+                            recipe={r}
+                            onRemoveFavorite={handleRemoveFavorite}
+                            navigate={navigate}
+                            isRemoving={removingFavoriteIds.has((r._id || r.id)?.toString())}
+                          />
                         </div>
                       ))}
                     </div>
@@ -831,6 +854,97 @@ export default function Profile() {
                           boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restaurant</span>
                         Find Recipes
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── MY PLANS TAB ── */}
+              {activeTab === 'plans' && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
+                      color: '#0f5238' }}>My Weekly Plans ({mealPlans.length})</h3>
+                    <button onClick={() => navigate('/meal-planner')}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px',
+                        padding: '10px 20px', background: '#0f5238', color: 'white',
+                        border: 'none', borderRadius: '10px', cursor: 'pointer',
+                        fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
+                        boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+                        New Plan
+                    </button>
+                  </div>
+
+                  {mealPlans.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {mealPlans.map(plan => {
+                        const startDate = new Date(plan.startDate);
+                        const endDate = new Date(startDate);
+                        endDate.setDate(endDate.getDate() + 6);
+                        
+                        // Count meals in this specific plan
+                        let mealsCount = 0;
+                        if (plan.week) {
+                          ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].forEach(day => {
+                            if (plan.week[day]) {
+                              ['Breakfast','Lunch','Dinner'].forEach(slot => {
+                                if (plan.week[day][slot]) mealsCount++;
+                              });
+                            }
+                          });
+                        }
+
+                        return (
+                          <div key={plan._id} style={{ background: 'white', borderRadius: '16px', padding: '20px',
+                            boxShadow: '0 4px 20px rgba(45,106,79,0.07)', border: '1px solid #ecfdf5',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <p style={{ fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700, color: '#191c1d', marginBottom: '4px' }}>
+                                Week of {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </p>
+                              <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', color: '#707973' }}>
+                                {mealsCount} {mealsCount === 1 ? 'meal' : 'meals'} planned
+                              </p>
+                            </div>
+                            <button onClick={() => navigate(`/meal-planner?startDate=${plan.startDate}`)}
+                              style={{ padding: '8px 20px', background: '#f0faf5', color: '#0f5238',
+                                border: 'none', borderRadius: '10px', cursor: 'pointer',
+                                fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
+                                transition: 'all 0.15s' }}>
+                              View Plan
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px',
+                      boxShadow: '0 4px 20px rgba(45,106,79,0.06)',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      textAlign: 'center', gap: '16px' }}>
+                      <div style={{ width: '80px', height: '80px', background: '#f0faf5',
+                        borderRadius: '50%', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined"
+                          style={{ fontSize: '40px', color: '#2d6a4f' }}>calendar_month</span>
+                      </div>
+                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
+                        color: '#191c1d' }}>No meal plans saved</h4>
+                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px',
+                        color: '#707973', maxWidth: '320px', lineHeight: 1.6 }}>
+                        Plan your week in the meal planner and save it to see it here.
+                      </p>
+                      <button onClick={() => navigate('/meal-planner')}
+                        style={{ marginTop: '8px', padding: '12px 28px', background: '#0f5238',
+                          color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                          fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_add_on</span>
+                        Go to Meal Planner
                       </button>
                     </div>
                   )}
