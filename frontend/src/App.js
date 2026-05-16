@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { FavoritesProvider } from './context/FavoritesContext';
 import AuthPage from './pages/AuthPage';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
@@ -22,38 +23,40 @@ function HomeOrDashboard() {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<HomeOrDashboard />} />
-        <Route path="/login" element={<AuthPage />} />
-        <Route path="/recipes" element={<Recipes />} />
-        <Route path="/grocery" element={<GroceryList />} />
-        <Route path="/meal-planner" element={<MealPlanner />} />
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
-        <Route path="/recipes/create" element={
-          <ProtectedRoute>
-            <CreateRecipe />
-          </ProtectedRoute>
-        } />
-        <Route path="/recipes/edit/:id" element={
-          <ProtectedRoute>
-            <CreateRecipe />
-          </ProtectedRoute>
-        } />
-        <Route path="/CreateRecipe" element={<Navigate to="/recipes/create" replace />} />
-        <Route path="/create-recipe" element={<Navigate to="/recipes/create" replace />} />
-        <Route path="/recipes/:id" element={<RecipeDetail />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-      </Routes>
-    </Router>
+    <FavoritesProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<HomeOrDashboard />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/recipes" element={<Recipes />} />
+          <Route path="/grocery" element={<GroceryList />} />
+          <Route path="/meal-planner" element={<MealPlanner />} />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
+          <Route path="/recipes/create" element={
+            <ProtectedRoute>
+              <CreateRecipe />
+            </ProtectedRoute>
+          } />
+          <Route path="/recipes/edit/:id" element={
+            <ProtectedRoute>
+              <CreateRecipe />
+            </ProtectedRoute>
+          } />
+          <Route path="/CreateRecipe" element={<Navigate to="/recipes/create" replace />} />
+          <Route path="/create-recipe" element={<Navigate to="/recipes/create" replace />} />
+          <Route path="/recipes/:id" element={<RecipeDetail />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
+    </FavoritesProvider>
   );
 }
 

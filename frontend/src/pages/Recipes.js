@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { useFavorites } from '../context/FavoritesContext';
 
 const RECIPES_PER_PAGE = 12;
 
 const Recipes = () => {
   const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Recipes");
   const [currentPage, setCurrentPage] = useState(1);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fallingItems, setFallingItems] = useState([]);
-  const [favorites, setFavorites] = useState([]);
 
   const handleCreateClick = () => {
     const veggieImages = [
@@ -39,19 +40,10 @@ const Recipes = () => {
     setTimeout(() => { setFallingItems((prev) => prev.slice(12)); }, 3000);
   };
 
-  const toggleFavorite = async (recipeId) => {
+  const handleToggleFavorite = async (recipeId) => {
     const token = localStorage.getItem('token');
     if (!token) { navigate('/login'); return; }
-    try {
-      const res = await api.post(`/user/favorites/${recipeId}`);
-      if (res.data.isFavorite) {
-        setFavorites(prev => Array.from(new Set([...prev, recipeId])));
-      } else {
-        setFavorites(prev => prev.filter(id => id !== recipeId));
-      }
-    } catch (err) {
-      console.error('Failed to toggle favorite:', err);
-    }
+    await toggleFavorite(recipeId);
   };
 
   useEffect(() => {
@@ -59,15 +51,6 @@ const Recipes = () => {
       try {
         const res = await api.get('/recipes');
         setRecipes(res.data.recipes);
-
-        // Load user favorites if logged in
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const favRes = await api.get('/user/favorites');
-            setFavorites(favRes.data.favorites.map(f => f._id || f));
-          } catch (e) { /* not logged in or error */ }
-        }
       } catch (err) {
         console.error('Failed to fetch recipes:', err);
       } finally {
@@ -213,7 +196,10 @@ const Recipes = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {paginatedRecipes.map(recipe => (
-                <RecipeCard key={recipe._id} recipe={recipe} onClick={() => navigate(`/recipes/${recipe._id}`)} isFavorite={favorites.includes(recipe._id)} onToggleFavorite={() => toggleFavorite(recipe._id)} />
+                <RecipeCard key={recipe._id} recipe={recipe}
+                  onClick={() => navigate(`/recipes/${recipe._id}`)}
+                  isFavorite={isFavorite(recipe._id)}
+                  onToggleFavorite={() => handleToggleFavorite(recipe._id)} />
               ))}
             </div>
 
@@ -259,6 +245,21 @@ const Recipes = () => {
   );
 };
 
+const Stars = ({ rating, count }) => (
+  <div className="flex items-center gap-1.5">
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className="material-symbols-outlined text-[16px]" style={{
+          color: '#fd9d1a',
+          fontVariationSettings: i <= Math.round(rating) ? '"FILL" 1' : '"FILL" 0'
+        }}>star</span>
+      ))}
+    </div>
+    <span className="text-[13px] font-bold text-[#0f5238]">{rating > 0 ? rating.toFixed(1) : 'New'}</span>
+    {count > 0 && <span className="text-[12px] text-stone-400 font-medium">({count} reviews)</span>}
+  </div>
+);
+
 const RecipeCard = ({ recipe, onClick, isFavorite, onToggleFavorite }) => (
   <div className="reveal group bg-white rounded-[2rem] overflow-hidden border border-stone-100/50 flex flex-col relative shadow-md hover:shadow-2xl transition-all duration-500">
     <div className="relative h-72 overflow-hidden">
@@ -267,11 +268,13 @@ const RecipeCard = ({ recipe, onClick, isFavorite, onToggleFavorite }) => (
         : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
       }
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
+    <div className="absolute top-5 left-5 z-10 flex flex-col gap-2">
       {recipe.averageRating >= 4 && (
-        <span className="absolute top-5 left-5 bg-white/90 px-3 py-1.5 rounded-full text-[#0f5238] text-[10px] font-bold shadow-sm flex items-center gap-1 z-10">
+        <span className="bg-white/90 px-3 py-1.5 rounded-full text-[#0f5238] text-[10px] font-bold shadow-sm flex items-center gap-1 w-fit">
           <span className="material-symbols-outlined text-[12px]">stars</span> HIGHLY RATED
         </span>
       )}
+    </div>
       <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
         className={`absolute top-5 right-5 w-11 h-11 rounded-full flex items-center justify-center transition-all z-10 ${isFavorite ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white/90 text-[#0f5238] hover:bg-[#0f5238] hover:text-white'}`}>
         <span className="material-symbols-outlined" style={{ fontVariationSettings: isFavorite ? '"FILL" 1' : '"FILL" 0' }}>favorite</span>
@@ -279,7 +282,10 @@ const RecipeCard = ({ recipe, onClick, isFavorite, onToggleFavorite }) => (
     </div>
     <div className="p-8 flex-grow">
       <span className="px-4 py-1.5 bg-[#0f5238]/10 text-[#0f5238] pill-button text-[10px] font-bold uppercase">{recipe.category || 'Recipe'}</span>
-      <h3 className="text-[24px] font-[600] font-['Lexend'] text-[#0f5238] my-4 leading-tight">{recipe.title}</h3>
+      <h3 className="text-[24px] font-[600] font-['Lexend'] text-[#0f5238] mt-4 mb-2 leading-tight">{recipe.title}</h3>
+      <div className="mb-4">
+        <Stars rating={recipe.averageRating || 0} count={recipe.ratingsCount || 0} />
+      </div>
       <div className="flex justify-between text-stone-500 pt-4 border-t border-stone-50 mb-6">
         <span className="text-[12px] font-bold flex items-center gap-1">
           <span className="material-symbols-outlined text-sm text-[#0f5238]/60">local_fire_department</span>

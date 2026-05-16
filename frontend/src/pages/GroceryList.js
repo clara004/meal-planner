@@ -1,104 +1,90 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
-const NAV_LINKS = [
-  { label: "Home", to: "/" },
-  { label: "Recipes", to: "/recipes" },
-  { label: "Meal Plan", to: "/dashboard" },
-  { label: "Grocery List", to: "/grocery-list", active: true },
-];
-
-const CATEGORIES = [
-  {
-    id: "produce",
-    label: "Produce",
-    icon: "🥬",
-    items: [
-      { id: 1, name: "Baby Spinach", qty: "200g", checked: false },
-      { id: 2, name: "Cherry Tomatoes", qty: "1 pint", checked: false },
-      { id: 3, name: "Red Onion", qty: "1 large", checked: true },
-    ],
-  },
-  {
-    id: "proteins",
-    label: "Proteins",
-    icon: "🍗",
-    items: [
-      { id: 4, name: "Chicken Breast", qty: "600g", checked: false },
-      { id: 5, name: "Fresh Salmon Fillets", qty: "2 fillets", checked: false },
-    ],
-  },
-  {
-    id: "dairy",
-    label: "Dairy & Eggs",
-    icon: "🥚",
-    allDone: true,
-    items: [
-      { id: 6, name: "Greek Yogurt", qty: "500g", checked: true },
-      { id: 7, name: "Free Range Eggs", qty: "12", checked: true },
-      { id: 8, name: "Feta Cheese", qty: "200g", checked: true },
-    ],
-  },
-  {
-    id: "pantry",
-    label: "Pantry",
-    icon: "🫙",
-    items: [
-      { id: 9, name: "Quinoa", qty: "1 cup", checked: false },
-      { id: 10, name: "Extra Virgin Olive Oil", qty: "Bottled", checked: false },
-      { id: 11, name: "Cumin", qty: "Small jar", checked: false },
-    ],
-  },
-];
-
-const RECIPES = [
-  {
-    id: 1,
-    name: "Mediterranean Quinoa Bowl",
-    servings: "4 servings",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAAFZPq_JW-GVkbLlAWWNVz_MYZrRPhjsuRC-SvpadtXwl2UA285qxjDJ9t7Wj1p-udzNcNOynDyhJFxl5gCXvDP59UG9bxHuGM_NIvmSpzhinEDSPlmDuqKMpsCOM1HNzar8WwqUnoSbzO7-UwAxu0v3njB36sk8ax8qk15ciidaSoImEzKVNGkFENI4RFPw5gi1ZEf67r3k_5hFzAGIQTfCallkAy2OYOBF7taPR8DPPZu58ZKD1O9P4en_7-IkTBsIrgEzL0qliO",
-  },
-  {
-    id: 2,
-    name: "Spicy Salmon Tacos",
-    servings: "2 servings",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuD6glLbvkB1_EUUZogPlgU1bk6oOa2DazYATIkv6eBczL9eW3yo9iFMacAi1D3huy2YhEqGR9DZmzD10pUsiQLAIbqWn0HxX-llJmqz_fgAATMW_qUVMwifXSEWwE5HZnaOnrlMgJSPXeyG3-rXr6sJiAxYW8vmpe64_m5y0OFZrPzJt9gBNb6roklR3o5Ijowopnc55ualNcRVrBBDpEyJXNVcsi-S2RmAXOO9Yja3U-4E_NKdYqzNB2_U_1QqWWvcHdSPw6A_-h-J",
-  },
-  {
-    id: 3,
-    name: "Power Green Salad",
-    servings: "1 serving",
-    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuAaAKPY-mQ-zX3Mex22daIvZWIG-VulzeqSN7HjQU4fUdCn-ebagsf2tFyLzVU-a3A2Xa_6GNEE7D_wFAQ4-VqBgwLqQ_3rPFXoqZwHWAvdqcWcwrkobZM8DlJESrkIfp5UCr_JovfpRIsHF3-IuVlFb2L7ZRFpM6kYjmuFtabmZiQ35aQXNhX8hUxWypyaOGSgSw7lT6PXYyhwysA5nPxpdNloAAmkYHTr7A6Xjm1AvVwVfVIOf2XsXDNdHY9QXOjz_2KG-s",
-  },
-];
+import { useNavigate, useSearchParams } from "react-router-dom";
+import api from "../utils/api";
+import html2pdf from "html2pdf.js";
+import { getMonday } from "../utils/dateUtils";
 
 export default function GroceryList() {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Flatten all items into a single stateful map keyed by item id
-  const allItems = CATEGORIES.flatMap((c) => c.items);
-  const initialChecked = Object.fromEntries(allItems.map((i) => [i.id, i.checked]));
-  const [checked, setChecked] = useState(initialChecked);
-  const [collapsed, setCollapsed] = useState({ dairy: true });
-
-  const toggle = (id) => setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
-  const toggleCollapse = (catId) =>
-    setCollapsed((prev) => ({ ...prev, [catId]: !prev[catId] }));
-
-  const totalItems = allItems.length;
-  const checkedCount = Object.values(checked).filter(Boolean).length;
-  const remaining = totalItems - checkedCount;
-  const progress = Math.round((checkedCount / totalItems) * 100);
-
-  const markAllDone = () =>
-    setChecked(Object.fromEntries(allItems.map((i) => [i.id, true])));
-
+  const [searchParams] = useSearchParams();
+  const [ingredients, setIngredients] = useState([]);
+  const [recipesIncluded, setRecipesIncluded] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [checked, setChecked] = useState({});
   const [pageLoaded, setPageLoaded] = useState(false);
+
   useEffect(() => {
     const timer = setTimeout(() => setPageLoaded(true), 50);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const fetchShoppingList = async () => {
+      try {
+        let startDate = searchParams.get('startDate');
+        
+        if (!startDate) {
+          startDate = localStorage.getItem('lastMealPlanDate');
+        }
+
+        if (!startDate) {
+          startDate = getMonday(new Date()).toISOString();
+        } else {
+          localStorage.setItem('lastMealPlanDate', startDate);
+        }
+        const res = await api.get(`/mealplan/shopping-list?startDate=${startDate}`);
+        setIngredients(res.data.ingredients);
+        setRecipesIncluded(res.data.recipesIncluded);
+        const initialChecked = {};
+        res.data.ingredients.forEach((_, i) => { initialChecked[i] = false; });
+        setChecked(initialChecked);
+      } catch (err) {
+        setError('Could not load shopping list. Make sure you have recipes in your meal plan.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchShoppingList();
+  }, [searchParams]);
+
+  const toggle = (i) => setChecked(prev => ({ ...prev, [i]: !prev[i] }));
+  const totalItems = ingredients.length;
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+  const remaining = totalItems - checkedCount;
+  const progress = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
+  const markAllDone = () => {
+    const all = {};
+    ingredients.forEach((_, i) => { all[i] = true; });
+    setChecked(all);
+  };
+
+  const exportPDF = () => {
+    const element = document.getElementById('grocery-list-content');
+    const opt = {
+      margin:       [10, 10, 10, 10],
+      filename:     'grocery-list.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, ignoreElements: (node) => node.id === 'action-buttons' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'Plus Jakarta Sans' }}>
+      Loading your shopping list...
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'Plus Jakarta Sans', gap: 16 }}>
+      <p style={{ color: '#6b7280', fontSize: 18, textAlign: 'center', maxWidth: 400 }}>{error}</p>
+      <button onClick={() => navigate('/meal-planner')} style={{ background: '#0f5238', color: 'white', border: 'none', borderRadius: 12, padding: '12px 24px', fontWeight: 700, cursor: 'pointer' }}>
+        Go to Meal Planner
+      </button>
+    </div>
+  );
 
   return (
     <div
@@ -111,437 +97,158 @@ export default function GroceryList() {
         backgroundSize: "24px 24px",
       }}
     >
-      {/* Google Fonts */}
       <link
         href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap"
         rel="stylesheet"
       />
 
-      {/* ── TOP NAV ── */}
+      {/* NAV */}
       <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
         <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          <div 
-            onClick={() => navigate('/')} 
+          <div
+            onClick={() => navigate('/')}
             className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
           >
             Vitality Kitchen
           </div>
-          
           <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
             <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            <button 
-              onClick={() => navigate('/recipes')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Recipes
-            </button>
-            <button 
-              onClick={() => navigate('/meal-planner')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Meal Planner
-            </button>
-            <button 
-              onClick={() => navigate('/grocery')} 
-              className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
-            >
-              Grocery List
-            </button>
+            <button onClick={() => navigate('/recipes')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Recipes</button>
+            <button onClick={() => navigate('/meal-planner')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Planner</button>
+            <button onClick={() => navigate('/grocery')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Grocery List</button>
           </div>
-
           <div className="flex items-center gap-6">
             {localStorage.getItem('token') ? (
-              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
+              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
                 <span className="material-symbols-outlined text-sm">person</span>
                 Profile
               </button>
             ) : (
               <>
                 <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
+                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
               </>
             )}
           </div>
         </nav>
       </header>
 
-      {/* ── MAIN ── */}
-      <main
-        style={{
-          paddingTop: 112,
-          paddingBottom: 120,
-          maxWidth: 1280,
-          margin: "0 auto",
-          padding: "112px 32px 140px",
-        }}
-      >
-        {/* Header Section */}
-        <section
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            marginBottom: 48,
-            gap: 24,
-          }}
-        >
+      {/* MAIN */}
+      <main id="grocery-list-content" style={{ paddingTop: 112, paddingBottom: 120, maxWidth: 1280, margin: "0 auto", padding: "112px 32px 140px" }}>
+
+        {/* Header */}
+        <section style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 48, gap: 24 }}>
           <div>
-            <h1
-              style={{
-                fontFamily: "'Lexend', sans-serif",
-                fontSize: 48,
-                fontWeight: 700,
-                color: "#0f5238",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                margin: 0,
-              }}
-            >
+            <h1 style={{ fontFamily: "'Lexend', sans-serif", fontSize: 48, fontWeight: 700, color: "#0f5238", letterSpacing: "-0.02em", lineHeight: 1.1, margin: 0 }}>
               Your Grocery List
             </h1>
             <p style={{ color: "#6b7280", marginTop: 8, fontSize: 18 }}>
-              Generated from: Week of May 5 – May 11
+              {totalItems} ingredients from {recipesIncluded.length} recipes
             </p>
           </div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <div id="action-buttons" style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                background: "#0f5238",
-                color: "white",
-                border: "none",
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-                boxShadow: "0 4px 16px rgba(15,82,56,0.15)",
-                transition: "opacity 0.2s",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
+              onClick={() => window.print()}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "white", color: "#0f5238", border: "1px solid #0f5238", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 4px 16px rgba(15,82,56,0.05)", transition: "opacity 0.2s", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              ↺ Regenerate List
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>print</span>
+              Print
             </button>
             <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                background: "#fd9d1a",
-                color: "#663b00",
-                border: "none",
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-                boxShadow: "0 4px 16px rgba(253,157,26,0.2)",
-                transition: "opacity 0.2s",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
+              onClick={exportPDF}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "white", color: "#0f5238", border: "1px solid #0f5238", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 4px 16px rgba(15,82,56,0.05)", transition: "opacity 0.2s", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              📄 Export as PDF
+              <span className="material-symbols-outlined" style={{ fontSize: 18 }}>picture_as_pdf</span>
+              Export PDF
+            </button>
+            <button
+              onClick={() => navigate('/meal-planner')}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "#0f5238", color: "white", border: "none", borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: "pointer", letterSpacing: "0.04em", boxShadow: "0 4px 16px rgba(15,82,56,0.15)", transition: "opacity 0.2s", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              ↺ Regenerate List
             </button>
           </div>
         </section>
 
-        {/* Two-column Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: 24,
-          }}
-          className="main-grid"
-        >
-          {/* ── LEFT: Categories ── */}
+        {/* Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24 }} className="main-grid">
+
+          {/* LEFT: Ingredients */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-            {CATEGORIES.map((cat) => {
-              const isCollapsed = collapsed[cat.id];
-              const catAllDone = cat.items.every((i) => checked[i.id]);
-
-              return (
-                <div
-                  key={cat.id}
-                  style={{
-                    background: catAllDone ? "#f3f4f5" : "white",
-                    borderRadius: 16,
-                    padding: 24,
-                    boxShadow: catAllDone
-                      ? "none"
-                      : "0 4px 20px rgba(45,106,79,0.05)",
-                    border: catAllDone
-                      ? "1.5px dashed #c9d0c8"
-                      : "1px solid rgba(236,253,245,0.5)",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  {/* Category Header */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: isCollapsed ? 0 : 20,
-                      paddingBottom: isCollapsed ? 0 : 16,
-                      borderBottom: isCollapsed ? "none" : "1px solid #f1f5f9",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => toggleCollapse(cat.id)}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <span
-                        style={{
-                          fontSize: 20,
-                          padding: "6px 8px",
-                          background: "#b1f0ce",
-                          borderRadius: 8,
-                        }}
-                      >
-                        {cat.icon}
+            <div style={{ background: "white", borderRadius: 16, padding: 24, boxShadow: "0 4px 20px rgba(45,106,79,0.05)", border: "1px solid rgba(236,253,245,0.5)" }}>
+              <h2 style={{ fontFamily: "'Lexend', sans-serif", fontSize: 20, fontWeight: 600, color: "#111827", marginBottom: 20 }}>
+                Ingredients
+              </h2>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 14 }}>
+                {ingredients.map((item, i) => (
+                  <li key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 16, cursor: "pointer", flex: 1 }}>
+                      <input
+                        type="checkbox"
+                        checked={checked[i] || false}
+                        onChange={() => toggle(i)}
+                        style={{ width: 22, height: 22, accentColor: "#0f5238", cursor: "pointer", flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: 16, color: checked[i] ? "#9ca3af" : "#111827", textDecoration: checked[i] ? "line-through" : "none", fontStyle: checked[i] ? "italic" : "normal", transition: "all 0.2s" }}>
+                        {item.name}
                       </span>
-                      <h2
-                        style={{
-                          fontFamily: "'Lexend', sans-serif",
-                          fontSize: 20,
-                          fontWeight: 600,
-                          color: catAllDone ? "#9ca3af" : "#111827",
-                          margin: 0,
-                        }}
-                      >
-                        {cat.label}
-                      </h2>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      {catAllDone && (
-                        <span
-                          style={{
-                            background: "#0f5238",
-                            color: "white",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            padding: "3px 12px",
-                            borderRadius: 9999,
-                            letterSpacing: "0.04em",
-                          }}
-                        >
-                          All done!
-                        </span>
-                      )}
-                      <span style={{ color: "#9ca3af", fontSize: 20 }}>
-                        {isCollapsed ? "▾" : "▴"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Items */}
-                  {!isCollapsed && (
-                    <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 14 }}>
-                      {cat.items.map((item) => (
-                        <li
-                          key={item.id}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <label
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 16,
-                              cursor: "pointer",
-                              flex: 1,
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked[item.id] || false}
-                              onChange={() => toggle(item.id)}
-                              style={{
-                                width: 22,
-                                height: 22,
-                                accentColor: "#0f5238",
-                                cursor: "pointer",
-                                flexShrink: 0,
-                              }}
-                            />
-                            <span
-                              style={{
-                                fontSize: 16,
-                                color: checked[item.id] ? "#9ca3af" : "#111827",
-                                textDecoration: checked[item.id] ? "line-through" : "none",
-                                fontStyle: checked[item.id] ? "italic" : "normal",
-                                transition: "all 0.2s",
-                              }}
-                            >
-                              {item.name}
-                            </span>
-                          </label>
-                          <span
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 700,
-                              color: checked[item.id] ? "#c4c9c3" : "#6b7280",
-                              background: checked[item.id] ? "#fafafa" : "#f3f4f5",
-                              padding: "4px 12px",
-                              borderRadius: 9999,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {item.qty}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            })}
+                    </label>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: checked[i] ? "#c4c9c3" : "#6b7280", background: checked[i] ? "#fafafa" : "#f3f4f5", padding: "4px 12px", borderRadius: 9999, whiteSpace: "nowrap" }}>
+                      {item.quantity > 0 ? `${item.quantity} ${item.unit || ''}` : item.unit || ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          {/* ── RIGHT: Sidebar ── */}
-          <aside
-            style={{ display: "flex", flexDirection: "column", gap: 24 }}
-            className="sidebar"
-          >
-            {/* Summary Card */}
-            <div
-              style={{
-                background: "white",
-                borderRadius: 16,
-                padding: 24,
-                boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
-                border: "1px solid rgba(236,253,245,0.5)",
-              }}
-            >
-              <h3
-                style={{
-                  fontFamily: "'Lexend', sans-serif",
-                  fontSize: 20,
-                  fontWeight: 600,
-                  marginTop: 0,
-                  marginBottom: 20,
-                }}
-              >
+          {/* RIGHT: Sidebar */}
+          <aside style={{ display: "flex", flexDirection: "column", gap: 24 }} className="sidebar">
+
+            {/* Trip Summary */}
+            <div style={{ background: "white", borderRadius: 16, padding: 24, boxShadow: "0 12px 32px rgba(0,0,0,0.08)", border: "1px solid rgba(236,253,245,0.5)" }}>
+              <h3 style={{ fontFamily: "'Lexend', sans-serif", fontSize: 20, fontWeight: 600, marginTop: 0, marginBottom: 20 }}>
                 Trip Summary
               </h3>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10, fontSize: 14, fontWeight: 600 }}>
                 <span style={{ color: "#6b7280" }}>Progress</span>
-                <span style={{ color: "#0f5238" }}>
-                  {checkedCount} of {totalItems} items
-                </span>
+                <span style={{ color: "#0f5238" }}>{checkedCount} of {totalItems} items</span>
               </div>
-              <div
-                style={{
-                  width: "100%",
-                  height: 12,
-                  background: "#edeeef",
-                  borderRadius: 9999,
-                  overflow: "hidden",
-                  marginBottom: 20,
-                }}
-              >
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${progress}%`,
-                    background: "#0f5238",
-                    borderRadius: 9999,
-                    transition: "width 0.4s ease",
-                  }}
-                />
+              <div style={{ width: "100%", height: 12, background: "#edeeef", borderRadius: 9999, overflow: "hidden", marginBottom: 20 }}>
+                <div style={{ height: "100%", width: `${progress}%`, background: "#0f5238", borderRadius: 9999, transition: "width 0.4s ease" }} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                {[
-                  { label: "Total", val: totalItems },
-                  { label: "Checked", val: checkedCount },
-                ].map(({ label, val }) => (
-                  <div
-                    key={label}
-                    style={{
-                      background: "#f3f4f5",
-                      borderRadius: 10,
-                      padding: 14,
-                      textAlign: "center",
-                    }}
-                  >
-                    <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", textTransform: "uppercase" }}>
-                      {label}
-                    </p>
-                    <p style={{ margin: "4px 0 0", fontSize: 28, fontWeight: 700, color: "#0f5238", fontFamily: "'Lexend', sans-serif" }}>
-                      {val}
-                    </p>
+                {[{ label: "Total", val: totalItems }, { label: "Checked", val: checkedCount }].map(({ label, val }) => (
+                  <div key={label} style={{ background: "#f3f4f5", borderRadius: 10, padding: 14, textAlign: "center" }}>
+                    <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", textTransform: "uppercase" }}>{label}</p>
+                    <p style={{ margin: "4px 0 0", fontSize: 28, fontWeight: 700, color: "#0f5238", fontFamily: "'Lexend', sans-serif" }}>{val}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Recipes Included */}
-            <div
-              style={{
-                background: "white",
-                borderRadius: 16,
-                padding: 24,
-                boxShadow: "0 4px 20px rgba(45,106,79,0.05)",
-                border: "1px solid rgba(236,253,245,0.5)",
-              }}
-            >
+            <div style={{ background: "white", borderRadius: 16, padding: 24, boxShadow: "0 4px 20px rgba(45,106,79,0.05)", border: "1px solid rgba(236,253,245,0.5)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <h3 style={{ fontFamily: "'Lexend', sans-serif", fontSize: 20, fontWeight: 600, margin: 0 }}>
-                  Recipes included
-                </h3>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#0f5238" }}>
-                  {RECIPES.length} total
-                </span>
+                <h3 style={{ fontFamily: "'Lexend', sans-serif", fontSize: 20, fontWeight: 600, margin: 0 }}>Recipes included</h3>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#0f5238" }}>{recipesIncluded.length} total</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {RECIPES.map((r) => (
-                  <Link
-                    key={r.id}
-                    to={`/recipe/${r.id}`}
-                    style={{
-                      display: "flex",
-                      gap: 12,
-                      padding: 10,
-                      borderRadius: 10,
-                      textDecoration: "none",
-                      transition: "background 0.15s",
-                      cursor: "pointer",
-                    }}
+                {recipesIncluded.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, padding: 10, borderRadius: 10 }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f5")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <div
-                      style={{
-                        width: 60,
-                        height: 60,
-                        borderRadius: 10,
-                        overflow: "hidden",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <img
-                        src={r.img}
-                        alt={r.name}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </div>
+                    {r.image && (
+                      <div style={{ width: 60, height: 60, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+                        <img src={r.image} alt={r.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    )}
                     <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>
-                        {r.name}
-                      </span>
-                      <span style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>
-                        {r.servings}
-                      </span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#111827", lineHeight: 1.3 }}>{r.title}</span>
+                      <span style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{r.servings} servings</span>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>
@@ -549,33 +256,9 @@ export default function GroceryList() {
         </div>
       </main>
 
-      {/* ── STICKY BOTTOM BAR ── */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          width: "100%",
-          background: "rgba(255,255,255,0.92)",
-          backdropFilter: "blur(12px)",
-          borderTop: "1px solid #ecfdf5",
-          zIndex: 40,
-          padding: "16px 0",
-          boxShadow: "0 -4px 20px rgba(45,106,79,0.05)",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 1280,
-            margin: "0 auto",
-            padding: "0 32px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 16,
-          }}
-        >
+      {/* Sticky Bottom Bar */}
+      <div className="sticky-bottom-bar" style={{ position: "fixed", bottom: 0, left: 0, width: "100%", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)", borderTop: "1px solid #ecfdf5", zIndex: 40, padding: "16px 0", boxShadow: "0 -4px 20px rgba(45,106,79,0.05)" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
           <div>
             <p style={{ fontFamily: "'Lexend', sans-serif", fontSize: 20, fontWeight: 600, color: "#0f5238", margin: 0 }}>
               {remaining === 0 ? "All done! 🎉" : `${remaining} item${remaining !== 1 ? "s" : ""} remaining`}
@@ -586,21 +269,7 @@ export default function GroceryList() {
           </div>
           <button
             onClick={markAllDone}
-            style={{
-              padding: "12px 32px",
-              background: "#0f5238",
-              color: "white",
-              border: "none",
-              borderRadius: 12,
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: "pointer",
-              letterSpacing: "0.04em",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              boxShadow: "0 4px 16px rgba(15,82,56,0.2)",
-              transition: "opacity 0.2s",
-              opacity: remaining === 0 ? 0.5 : 1,
-            }}
+            style={{ padding: "12px 32px", background: "#0f5238", color: "white", border: "none", borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: "pointer", letterSpacing: "0.04em", fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: "0 4px 16px rgba(15,82,56,0.2)", transition: "opacity 0.2s", opacity: remaining === 0 ? 0.5 : 1 }}
             disabled={remaining === 0}
           >
             Mark All as Done
@@ -608,8 +277,8 @@ export default function GroceryList() {
         </div>
       </div>
 
-      {/* ── GLOBAL FOOTER ── */}
-            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
+      {/* Footer */}
+      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
         <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="flex flex-col items-center md:items-start gap-6">
             <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
@@ -628,30 +297,28 @@ export default function GroceryList() {
         </div>
       </footer>
 
-      {/* ── RESPONSIVE STYLES ── */}
       <style>{`
         @media (min-width: 1024px) {
-          .main-grid {
-            grid-template-columns: 1fr 380px !important;
-          }
-          .sidebar {
-            position: sticky;
-            top: 100px;
-            align-self: start;
-          }
-        }
-        @media (max-width: 768px) {
-          .desktop-nav { display: none !important; }
-          .hamburger { display: block !important; }
+          .main-grid { grid-template-columns: 1fr 380px !important; }
+          .sidebar { position: sticky; top: 100px; align-self: start; }
         }
         @media (max-width: 640px) {
           main { padding: 100px 16px 140px !important; }
           h1 { font-size: 32px !important; }
         }
-        input[type="checkbox"] {
-          border-radius: 6px;
-        }
+        input[type="checkbox"] { border-radius: 6px; }
         button:hover { opacity: 0.9; }
+        .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* Print Styles */
+        @media print {
+          header, footer, .sidebar, button, .sticky-bottom-bar { display: none !important; }
+          main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+          .main-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .reveal { background: white !important; background-image: none !important; min-height: auto !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
       `}</style>
     </div>
   );
