@@ -4,7 +4,6 @@ import * as Yup from "yup";
 import api from "../utils/api";
 import { useNavigate } from "react-router-dom";
 
-// ── Validation Schemas ────────────────────────────────────────────────────────
 const loginSchema = Yup.object({
   email: Yup.string().email("Enter a valid email address").required("Email is required"),
   password: Yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
@@ -23,7 +22,6 @@ const registerSchema = Yup.object({
     .required("Please set a daily calorie goal"),
 });
 
-// ── Sub-components ────────────────────────────────────────────────────────────
 function InputField({ id, label, type = "text", placeholder, icon, formik, rightIcon, onRightIconClick }) {
   const hasError = formik.touched[id] && formik.errors[id];
   return (
@@ -32,27 +30,12 @@ function InputField({ id, label, type = "text", placeholder, icon, formik, right
       <div style={{ position: "relative" }}>
         <span className="material-symbols-outlined" style={styles.inputIcon}>{icon}</span>
         <input
-          id={id}
-          name={id}
-          type={type}
-          placeholder={placeholder}
-          value={formik.values[id]}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          style={{
-            ...styles.input,
-            border: hasError ? "2px solid #ba1a1a" : "2px solid transparent",
-            paddingRight: rightIcon ? "48px" : "16px",
-          }}
+          id={id} name={id} type={type} placeholder={placeholder}
+          value={formik.values[id]} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          style={{ ...styles.input, border: hasError ? "2px solid #ba1a1a" : "2px solid transparent", paddingRight: rightIcon ? "48px" : "16px" }}
         />
         {rightIcon && (
-          <span
-            className="material-symbols-outlined"
-            style={styles.inputIconRight}
-            onClick={onRightIconClick}
-          >
-            {rightIcon}
-          </span>
+          <span className="material-symbols-outlined" style={styles.inputIconRight} onClick={onRightIconClick}>{rightIcon}</span>
         )}
       </div>
       {hasError && (
@@ -73,22 +56,12 @@ function SelectField({ id, label, icon, options, formik }) {
       <div style={{ position: "relative" }}>
         <span className="material-symbols-outlined" style={styles.inputIcon}>{icon}</span>
         <select
-          id={id}
-          name={id}
-          value={formik.values[id]}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          style={{
-            ...styles.input,
-            border: hasError ? "2px solid #ba1a1a" : "2px solid transparent",
-            appearance: "none",
-            cursor: "pointer",
-          }}
+          id={id} name={id} value={formik.values[id]}
+          onChange={formik.handleChange} onBlur={formik.handleBlur}
+          style={{ ...styles.input, border: hasError ? "2px solid #ba1a1a" : "2px solid transparent", appearance: "none", cursor: "pointer" }}
         >
           <option value="" disabled>Select your primary goal</option>
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+          {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <span className="material-symbols-outlined" style={styles.inputIconRight}>expand_more</span>
       </div>
@@ -102,7 +75,6 @@ function SelectField({ id, label, icon, options, formik }) {
   );
 }
 
-// ── Login Form ────────────────────────────────────────────────────────────────
 function LoginForm({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -139,24 +111,14 @@ function LoginForm({ onSuccess }) {
         <div style={{ position: "relative" }}>
           <span className="material-symbols-outlined" style={styles.inputIcon}>lock</span>
           <input
-            id="password"
-            name="password"
+            id="password" name="password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             value={formik.values.password}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            style={{
-              ...styles.input,
-              border: formik.touched.password && formik.errors.password ? "2px solid #ba1a1a" : "2px solid transparent",
-              paddingRight: "48px",
-            }}
+            onChange={formik.handleChange} onBlur={formik.handleBlur}
+            style={{ ...styles.input, border: formik.touched.password && formik.errors.password ? "2px solid #ba1a1a" : "2px solid transparent", paddingRight: "48px" }}
           />
-          <span
-            className="material-symbols-outlined"
-            style={{ ...styles.inputIconRight, cursor: "pointer" }}
-            onClick={() => setShowPassword(!showPassword)}
-          >
+          <span className="material-symbols-outlined" style={{ ...styles.inputIconRight, cursor: "pointer" }} onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? "visibility_off" : "visibility"}
           </span>
         </div>
@@ -174,12 +136,21 @@ function LoginForm({ onSuccess }) {
   );
 }
 
-// ── Register Form ─────────────────────────────────────────────────────────────
+const DIETARY_OPTIONS = ['Vegan', 'Vegetarian', 'Gluten-Free', 'Keto', 'Paleo', 'High-Protein', 'Dairy-Free', 'Nut-Free'];
+
 function RegisterForm({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedPrefs, setSelectedPrefs] = useState([]);
+  const [showOther, setShowOther] = useState(false);
+  const [otherPref, setOtherPref] = useState("");
+  const [prefsDropdownOpen, setPrefsDropdownOpen] = useState(false);
+
+  const togglePref = (pref) => {
+    setSelectedPrefs(prev => prev.includes(pref) ? prev.filter(p => p !== pref) : [...prev, pref]);
+  };
 
   const formik = useFormik({
     initialValues: { name: "", email: "", password: "", confirmPassword: "", calorieGoal: "", dietaryPrefs: "" },
@@ -188,12 +159,16 @@ function RegisterForm({ onSuccess }) {
       setLoading(true);
       setServerError("");
       try {
+        const allPrefs = [...selectedPrefs];
+        if (showOther && otherPref.trim()) {
+          allPrefs.push(otherPref.trim());
+        }
         const payload = {
           name: values.name,
           email: values.email,
           password: values.password,
           calorie_goal: Number(values.calorieGoal),
-          dietary_prefs: values.dietaryPrefs ? values.dietaryPrefs.split(",").map(s => s.trim()) : [],
+          dietary_prefs: allPrefs,
         };
         const res = await api.post("/auth/register", payload);
         localStorage.setItem("token", res.data.token);
@@ -258,18 +233,89 @@ function RegisterForm({ onSuccess }) {
         ]}
       />
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        <label htmlFor="dietaryPrefs" style={styles.label}>Dietary Preferences <span style={{ color: "#707973", fontWeight: 400 }}>(optional)</span></label>
+        <label style={styles.label}>Dietary Preferences <span style={{ color: "#707973", fontWeight: 400 }}>(optional)</span></label>
+        {/* Dropdown trigger */}
         <div style={{ position: "relative" }}>
-          <span className="material-symbols-outlined" style={styles.inputIcon}>restaurant</span>
-          <input
-            id="dietaryPrefs" name="dietaryPrefs" type="text"
-            placeholder="e.g. vegan, gluten-free, keto"
-            value={formik.values.dietaryPrefs}
-            onChange={formik.handleChange} onBlur={formik.handleBlur}
-            style={{ ...styles.input, border: "2px solid transparent" }}
-          />
+          <button type="button" onClick={() => setPrefsDropdownOpen(prev => !prev)}
+            style={{ ...styles.input, paddingLeft: "48px", display: "flex", alignItems: "center", cursor: "pointer",
+              background: "#f1f3f5", border: prefsDropdownOpen ? "2px solid #2d6a4f" : "2px solid transparent",
+              textAlign: "left", color: selectedPrefs.length > 0 ? "#191c1d" : "#aab0ac" }}>
+            <span className="material-symbols-outlined" style={{ ...styles.inputIcon, pointerEvents: "none" }}>restaurant</span>
+            {selectedPrefs.length > 0
+              ? <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: "14px", fontWeight: 500 }}>{selectedPrefs.join(", ")}{showOther && otherPref ? `, ${otherPref}` : ""}</span>
+              : <span style={{ fontSize: "14px" }}>Select dietary preferences...</span>}
+            <span className="material-symbols-outlined" style={{ ...styles.inputIconRight, pointerEvents: "none", transition: "transform 0.2s", transform: prefsDropdownOpen ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}>expand_more</span>
+          </button>
+          {/* Dropdown panel */}
+          {prefsDropdownOpen && (
+            <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, zIndex: 50,
+              background: "white", borderRadius: "14px", border: "1.5px solid #e1e3e4",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.12)", padding: "8px", maxHeight: "260px", overflowY: "auto" }}>
+              {DIETARY_OPTIONS.map(pref => {
+                const active = selectedPrefs.includes(pref);
+                return (
+                  <button key={pref} type="button" onClick={() => togglePref(pref)}
+                    style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                      padding: "10px 12px", border: "none", borderRadius: "10px", cursor: "pointer",
+                      background: active ? "#e8f5e9" : "transparent",
+                      fontFamily: "Plus Jakarta Sans", fontSize: "14px", fontWeight: active ? 700 : 500,
+                      color: active ? "#2d6a4f" : "#404943", transition: "all 0.15s" }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "18px", color: active ? "#2d6a4f" : "#bfc9c1",
+                      fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0" }}>
+                      {active ? "check_box" : "check_box_outline_blank"}
+                    </span>
+                    {pref}
+                  </button>
+                );
+              })}
+              {/* Divider */}
+              <div style={{ height: "1px", background: "#e1e3e4", margin: "4px 0" }} />
+              {/* Other option */}
+              <button type="button" onClick={() => { setShowOther(prev => !prev); }}
+                style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                  padding: "10px 12px", border: "none", borderRadius: "10px", cursor: "pointer",
+                  background: showOther ? "#e8f5e9" : "transparent",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "14px", fontWeight: showOther ? 700 : 500,
+                  color: showOther ? "#2d6a4f" : "#404943", transition: "all 0.15s" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "18px", color: showOther ? "#2d6a4f" : "#bfc9c1",
+                  fontVariationSettings: showOther ? "'FILL' 1" : "'FILL' 0" }}>
+                  {showOther ? "check_box" : "check_box_outline_blank"}
+                </span>
+                Other
+              </button>
+              {showOther && (
+                <div style={{ padding: "6px 12px 8px" }}>
+                  <input type="text" placeholder="Type your preference..." value={otherPref}
+                    onChange={(e) => setOtherPref(e.target.value)}
+                    style={{ ...styles.input, height: "40px", paddingLeft: "14px", fontSize: "13px" }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <span style={{ fontSize: "11px", color: "#707973" }}>Separate multiple preferences with commas</span>
+        {/* Selected chips preview */}
+        {(selectedPrefs.length > 0 || (showOther && otherPref)) && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+            {selectedPrefs.map(pref => (
+              <span key={pref} onClick={() => togglePref(pref)}
+                style={{ display: "inline-flex", alignItems: "center", gap: "4px",
+                  padding: "4px 12px", borderRadius: "9999px", background: "#b1f0ce", color: "#0f5238",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                {pref}
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+              </span>
+            ))}
+            {showOther && otherPref && (
+              <span onClick={() => { setOtherPref(""); setShowOther(false); }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "4px",
+                  padding: "4px 12px", borderRadius: "9999px", background: "#fef3c7", color: "#92400e",
+                  fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700, cursor: "pointer" }}>
+                {otherPref}
+                <span className="material-symbols-outlined" style={{ fontSize: "14px" }}>close</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <button type="submit" disabled={loading} style={{ ...styles.submitBtn, opacity: loading ? 0.7 : 1 }}>
         {loading ? "Creating account..." : "Create My Account"}
@@ -278,21 +324,18 @@ function RegisterForm({ onSuccess }) {
   );
 }
 
-// ── Main Auth Page ────────────────────────────────────────────────────────────
 export default function AuthPage() {
-  const navigate = useNavigate(); 
-  const [tab, setTab] = useState("login"); 
+  const navigate = useNavigate();
+  const [tab, setTab] = useState("login");
 
-  const handleSuccess = (user) => {
-    navigate("/");
-  };
+const handleSuccess = (user) => {
+  navigate("/profile");
+};
 
   return (
     <>
-      {/* Google Fonts + Material Icons */}
       <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
       <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-
       <style>{`
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -347,15 +390,8 @@ export default function AuthPage() {
           </div>
         </section>
 
-        {/* ── Form Side ── */}
-        <section className="auth-form-side" style={{
-          width: "50%", display: "flex", alignItems: "flex-start", justifyContent: "center",
-          background: "#ffffff", padding: "80px 32px",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d6a4f' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}>
+        <section className="auth-form-side" style={{ width: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#ffffff", padding: "48px 32px", backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d6a4f' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}>
           <div style={{ width: "100%", maxWidth: "440px", display: "flex", flexDirection: "column", gap: "28px" }}>
-
-            {/* Logo */}
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ width: 40, height: 40, background: "#2d6a4f", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span className="material-symbols-outlined" style={{ color: "white", fontSize: "22px" }}>eco</span>
@@ -365,8 +401,6 @@ export default function AuthPage() {
                 <div style={{ fontFamily: "Plus Jakarta Sans", fontWeight: 700, fontSize: "10px", color: "#707973", letterSpacing: "0.12em", textTransform: "uppercase", lineHeight: 1, marginTop: "2px" }}>Kitchen</div>
               </div>
             </div>
-
-            {/* Heading */}
             <div>
               <h2 style={{ fontFamily: "Lexend", fontSize: "28px", fontWeight: 600, color: "#191c1d", lineHeight: 1.3, marginBottom: "6px" }}>
                 {tab === "login" ? "Welcome back" : "Create your account"}
@@ -375,61 +409,34 @@ export default function AuthPage() {
                 {tab === "login" ? "Your journey to wellness continues here." : "Start your wellness journey today."}
               </p>
             </div>
-
-            {/* Tab Toggle */}
             <div style={{ display: "flex", padding: "4px", background: "#f3f4f5", borderRadius: "14px", gap: "4px" }}>
               {["login", "register"].map((t) => (
-                <button
-                  key={t}
-                  className="tab-btn"
-                  onClick={() => setTab(t)}
-                  type="button"
-                  style={{
-                    flex: 1, padding: "10px", border: "none", borderRadius: "10px", cursor: "pointer",
-                    fontFamily: "Lexend", fontSize: "14px", fontWeight: 600,
-                    background: tab === t ? "#ffffff" : "transparent",
-                    color: tab === t ? "#2d6a4f" : "#707973",
-                    boxShadow: tab === t ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-                  }}
-                >
+                <button key={t} className="tab-btn" onClick={() => setTab(t)} type="button"
+                  style={{ flex: 1, padding: "10px", border: "none", borderRadius: "10px", cursor: "pointer", fontFamily: "Lexend", fontSize: "14px", fontWeight: 600, background: tab === t ? "#ffffff" : "transparent", color: tab === t ? "#2d6a4f" : "#707973", boxShadow: tab === t ? "0 2px 8px rgba(0,0,0,0.08)" : "none" }}>
                   {t === "login" ? "Log In" : "Sign Up"}
                 </button>
               ))}
             </div>
-
-            {/* Form */}
-            {tab === "login"
-              ? <LoginForm onSuccess={handleSuccess} />
-              : <RegisterForm onSuccess={handleSuccess} />
-            }
-
-            {/* Divider */}
+            {tab === "login" ? <LoginForm onSuccess={handleSuccess} /> : <RegisterForm onSuccess={handleSuccess} />}
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <div style={{ flex: 1, height: "1px", background: "#e1e3e4" }} />
               <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: "11px", fontWeight: 700, color: "#707973", letterSpacing: "0.08em", textTransform: "uppercase" }}>or continue with</span>
               <div style={{ flex: 1, height: "1px", background: "#e1e3e4" }} />
             </div>
-
-            {/* Social buttons */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               {[
                 { label: "Google", icon: <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> },
                 { label: "Apple", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.96 0-2.04-.6-3.21-.6-1.19 0-2.31.6-3.13.6-2.34 0-4.47-3.27-4.47-6.52 0-3.32 2.01-5.12 4-5.12 1.02 0 1.9.54 2.65.54.72 0 1.76-.59 2.92-.59 1.1 0 2.21.5 3.01 1.58-2.6 1.4-2.18 4.8.44 6.18-.55 1.5-1.37 3.02-2.21 3.93zm-3.08-14.77c-.89 1.1-2.21 1.76-3.4 1.76.12-1.28.84-2.58 1.79-3.51 1-.98 2.37-1.76 3.47-1.76-.11 1.28-.97 2.41-1.86 3.51z"/></svg> },
               ].map(({ label, icon }) => (
-                <button key={label} type="button" style={styles.socialBtn}>
-                  {icon} {label}
-                </button>
+                <button key={label} type="button" style={styles.socialBtn}>{icon} {label}</button>
               ))}
             </div>
-
-            {/* Footer */}
             <p style={{ textAlign: "center", fontFamily: "Plus Jakarta Sans", fontSize: "11px", color: "#707973", lineHeight: 1.6 }}>
               By continuing, you agree to Vitality Kitchen's{" "}
               <a href="#" style={{ color: "#2d6a4f", fontWeight: 700, textDecoration: "none" }}>Terms of Service</a>
               {" "}and{" "}
               <a href="#" style={{ color: "#2d6a4f", fontWeight: 700, textDecoration: "none" }}>Privacy Policy</a>.
             </p>
-
           </div>
         </section>
       </main>
@@ -437,49 +444,14 @@ export default function AuthPage() {
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = {
-  label: {
-    fontFamily: "Plus Jakarta Sans", fontSize: "13px", fontWeight: 600,
-    color: "#404943", letterSpacing: "0.02em",
-  },
-  input: {
-    width: "100%", height: "48px", paddingLeft: "48px", paddingRight: "16px",
-    background: "#f1f3f5", borderRadius: "12px",
-    fontFamily: "Plus Jakarta Sans", fontSize: "15px", color: "#191c1d",
-    border: "2px solid transparent", transition: "all 0.15s ease",
-  },
-  inputIcon: {
-    position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)",
-    color: "#707973", fontSize: "20px", pointerEvents: "none",
-  },
-  inputIconRight: {
-    position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
-    color: "#707973", fontSize: "20px",
-  },
-  errorMsg: {
-    display: "flex", alignItems: "center", gap: "5px",
-    fontFamily: "Plus Jakarta Sans", fontSize: "12px", color: "#ba1a1a", fontWeight: 500,
-  },
-  serverError: {
-    display: "flex", alignItems: "center", gap: "8px",
-    padding: "12px 16px", background: "#ffdad6", borderRadius: "10px",
-    fontFamily: "Plus Jakarta Sans", fontSize: "13px", color: "#93000a", fontWeight: 500,
-  },
-  forgotLink: {
-    fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700,
-    color: "#2d6a4f", textDecoration: "none",
-  },
-  submitBtn: {
-    width: "100%", height: "48px", background: "#2d6a4f", color: "#ffffff",
-    border: "none", borderRadius: "12px", cursor: "pointer",
-    fontFamily: "Lexend", fontSize: "15px", fontWeight: 600,
-    boxShadow: "0 4px 16px rgba(45,106,79,0.2)",
-  },
-  socialBtn: {
-    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-    height: "44px", border: "1.5px solid #bfc9c1", borderRadius: "12px",
-    background: "#ffffff", cursor: "pointer",
-    fontFamily: "Plus Jakarta Sans", fontSize: "13px", fontWeight: 600, color: "#191c1d",
-  },
+  label: { fontFamily: "Plus Jakarta Sans", fontSize: "13px", fontWeight: 600, color: "#404943", letterSpacing: "0.02em" },
+  input: { width: "100%", height: "48px", paddingLeft: "48px", paddingRight: "16px", background: "#f1f3f5", borderRadius: "12px", fontFamily: "Plus Jakarta Sans", fontSize: "15px", color: "#191c1d", border: "2px solid transparent", transition: "all 0.15s ease" },
+  inputIcon: { position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#707973", fontSize: "20px", pointerEvents: "none" },
+  inputIconRight: { position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#707973", fontSize: "20px" },
+  errorMsg: { display: "flex", alignItems: "center", gap: "5px", fontFamily: "Plus Jakarta Sans", fontSize: "12px", color: "#ba1a1a", fontWeight: 500 },
+  serverError: { display: "flex", alignItems: "center", gap: "8px", padding: "12px 16px", background: "#ffdad6", borderRadius: "10px", fontFamily: "Plus Jakarta Sans", fontSize: "13px", color: "#93000a", fontWeight: 500 },
+  forgotLink: { fontFamily: "Plus Jakarta Sans", fontSize: "12px", fontWeight: 700, color: "#2d6a4f", textDecoration: "none" },
+  submitBtn: { width: "100%", height: "48px", background: "#2d6a4f", color: "#ffffff", border: "none", borderRadius: "12px", cursor: "pointer", fontFamily: "Lexend", fontSize: "15px", fontWeight: 600, boxShadow: "0 4px 16px rgba(45,106,79,0.2)" },
+  socialBtn: { display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", height: "44px", border: "1.5px solid #bfc9c1", borderRadius: "12px", background: "#ffffff", cursor: "pointer", fontFamily: "Plus Jakarta Sans", fontSize: "13px", fontWeight: 600, color: "#191c1d" },
 };
