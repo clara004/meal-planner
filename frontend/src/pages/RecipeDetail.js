@@ -193,7 +193,10 @@ const RecipeDetail = () => {
               {recipe.ingredients?.map((ing, i) => (
                 <label key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-transparent hover:border-[#0f5238]/20 transition-all cursor-pointer">
                   <input type="checkbox" className="w-5 h-5 rounded text-[#0f5238]" />
-                  <span className="text-gray-700">{ing.name}</span>
+                  <span className="text-gray-700 font-medium">
+                    {ing.quantity && ing.quantity > 0 ? `${ing.quantity} ${ing.unit || ''} ` : ''}
+                    {ing.name}
+                  </span>
                 </label>
               ))}
             </div>

@@ -1,3 +1,4 @@
+//connecting my app to mongoDB
 const mongoose = require('mongoose');
 require('dotenv').config();
 

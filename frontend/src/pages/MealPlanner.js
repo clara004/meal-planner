@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../utils/api';
-
-const getMonday = (d) => {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  date.setDate(diff);
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
+import { getMonday } from '../utils/dateUtils';
 
 const generateDays = (mondayDate) => {
   const days = [];
@@ -295,11 +287,30 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
 export default function MealPlanner() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const params = new URLSearchParams(location.search);
     const startDateParam = params.get('startDate');
-    return startDateParam ? new Date(startDateParam) : getMonday(new Date());
+
+    if (startDateParam) {
+      return new Date(startDateParam);
+    }
+
+    const saved = localStorage.getItem('lastMealPlanDate');
+
+    if (saved) {
+      const d = new Date(saved);
+      if (!isNaN(d.getTime())) {
+        return getMonday(d);
+      }
+    }
+
+    return getMonday(new Date());
   });
+
+  useEffect(() => {
+    localStorage.setItem('lastMealPlanDate', currentWeekStart.toISOString());
+  }, [currentWeekStart]);
   const days = generateDays(currentWeekStart);
 
   const [plan, setPlan] = useState(buildInitialPlan());
@@ -576,54 +587,54 @@ export default function MealPlanner() {
           </div>
         </div>
 
-      {/* ── Themed Modal Dialog ── */}
-      {modal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
-          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '24px'
-        }} onClick={() => setModal(null)}>
+        {/* ── Themed Modal Dialog ── */}
+        {modal && (
           <div style={{
-            background: 'white', borderRadius: '20px', padding: '32px',
-            maxWidth: '420px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
-            display: 'flex', flexDirection: 'column', gap: '16px'
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{
-                width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
-                background: modal.type === 'success' ? '#b1f0ce' : '#e8f5e9',
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                <span className="material-symbols-outlined" style={{
-                  fontSize: '26px',
-                  color: modal.type === 'success' ? '#0f5238' : '#2d6a4f',
-                  fontVariationSettings: '"FILL" 1'
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+            zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px'
+          }} onClick={() => setModal(null)}>
+            <div style={{
+              background: 'white', borderRadius: '20px', padding: '32px',
+              maxWidth: '420px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
+              display: 'flex', flexDirection: 'column', gap: '16px'
+            }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%', flexShrink: 0,
+                  background: modal.type === 'success' ? '#b1f0ce' : '#e8f5e9',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
-                  {modal.type === 'success' ? 'check_circle' : 'info'}
-                </span>
+                  <span className="material-symbols-outlined" style={{
+                    fontSize: '26px',
+                    color: modal.type === 'success' ? '#0f5238' : '#2d6a4f',
+                    fontVariationSettings: '"FILL" 1'
+                  }}>
+                    {modal.type === 'success' ? 'check_circle' : 'info'}
+                  </span>
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: 'Lexend', fontSize: '17px', fontWeight: 700, color: '#0f5238', margin: 0 }}>{modal.title}</h3>
+                </div>
               </div>
-              <div>
-                <h3 style={{ fontFamily: 'Lexend', fontSize: '17px', fontWeight: 700, color: '#0f5238', margin: 0 }}>{modal.title}</h3>
-              </div>
+              <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px', color: '#404943', lineHeight: 1.6, margin: 0 }}>
+                {modal.message}
+              </p>
+              <button onClick={() => setModal(null)} style={{
+                alignSelf: 'flex-end', padding: '10px 28px', background: '#0f5238', color: 'white',
+                border: 'none', borderRadius: '10px', cursor: 'pointer',
+                fontFamily: 'Lexend', fontSize: '13px', fontWeight: 700,
+                boxShadow: '0 4px 12px rgba(15,82,56,0.25)'
+              }}>OK</button>
             </div>
-            <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px', color: '#404943', lineHeight: 1.6, margin: 0 }}>
-              {modal.message}
-            </p>
-            <button onClick={() => setModal(null)} style={{
-              alignSelf: 'flex-end', padding: '10px 28px', background: '#0f5238', color: 'white',
-              border: 'none', borderRadius: '10px', cursor: 'pointer',
-              fontFamily: 'Lexend', fontSize: '13px', fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(15,82,56,0.25)'
-            }}>OK</button>
           </div>
-        </div>
-      )}
+        )}
 
-      {planError && (
-        <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#ffdad6', color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700 }}>
-          {planError}
-        </div>
-      )}
+        {planError && (
+          <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#ffdad6', color: '#93000a', borderRadius: '10px', fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700 }}>
+            {planError}
+          </div>
+        )}
 
         <div className="mp-layout" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
           <div style={{ flexGrow: 1, overflowX: 'auto', paddingBottom: '8px' }}>
