@@ -69,8 +69,14 @@ function RecipeCard({ recipe, onRemove }) {
       <img src={recipe.img} alt={recipe.name} style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', marginBottom: '6px' }} />
       <p style={{
         fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
-        color: '#0f5238', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+        color: '#0f5238', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px'
       }}>{recipe.name}</p>
+      {recipe.rating > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '4px' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '12px', color: '#fd9d1a', fontVariationSettings: '"FILL" 1' }}>star</span>
+          <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', fontWeight: 700, color: '#0f5238' }}>{recipe.rating.toFixed(1)}</span>
+        </div>
+      )}
       <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', color: '#707973', fontWeight: 500 }}>{recipe.kcal} kcal</p>
     </div>
   );
@@ -255,10 +261,13 @@ function RecipePickerModal({ slot, onSelect, onClose, allRecipes, filters }) {
                   fontFamily: 'Plus Jakarta Sans', fontSize: '12px', fontWeight: 700,
                   color: '#191c1d', margin: '0 0 2px'
                 }}>{recipe.name}</p>
-                <p style={{
-                  fontFamily: 'Plus Jakarta Sans', fontSize: '11px',
-                  color: '#707973', margin: '0 0 8px'
-                }}>{recipe.kcal} kcal • {recipe.cuisine}</p>
+                {recipe.rating > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginBottom: '4px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '12px', color: '#fd9d1a', fontVariationSettings: '"FILL" 1' }}>star</span>
+                    <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', fontWeight: 700, color: '#0f5238' }}>{recipe.rating.toFixed(1)}</span>
+                  </div>
+                )}
+                <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '11px', color: '#707973', margin: '0 0 8px' }}>{recipe.kcal} kcal • {recipe.cuisine}</p>
                 <span style={{
                   width: '100%', padding: '7px', background: '#0f5238', color: 'white',
                   borderRadius: '8px', fontFamily: 'Plus Jakarta Sans', fontSize: '12px',
@@ -310,7 +319,8 @@ export default function MealPlanner() {
           kcal: r.perServing?.calories || 0,
           cuisine: r.cuisine || 'General',
           img: r.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop',
-          time: r.prepTime ? `${r.prepTime} min` : '15 min'
+          time: r.prepTime ? `${r.prepTime} min` : '15 min',
+          rating: r.averageRating || 0
         }));
         setAllRecipes(formattedRecipes);
         setSuggested(formattedRecipes.slice(0, 3));
@@ -339,7 +349,8 @@ export default function MealPlanner() {
                 kcal: recipeData.perServing?.calories || 0,
                 cuisine: recipeData.cuisine || 'General',
                 img: recipeData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop',
-                time: recipeData.prepTime ? `${recipeData.prepTime} min` : '15 min'
+                time: recipeData.prepTime ? `${recipeData.prepTime} min` : '15 min',
+                rating: recipeData.averageRating || 0
               };
             }
           });

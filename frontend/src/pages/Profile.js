@@ -73,12 +73,11 @@ function RecipeCard({ recipe, onDelete, onRemoveFavorite, navigate }) {
           fontFamily: 'Plus Jakarta Sans', letterSpacing: '0.04em' }}>{recipe.cuisine}</span>
       </div>
       <div style={{ padding: '14px' }}>
-        <p style={{ fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
-          color: '#191c1d', marginBottom: '4px' }}>{recipe.title || recipe.name}</p>
-        <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px',
-          color: '#707973', marginBottom: '8px' }}>{recipe.perServing ? Math.round(recipe.perServing.calories) : recipe.kcal} kcal / serving</p>
-        <Stars rating={recipe.averageRating || recipe.rating || 0} />
-        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+        <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
+          color: '#191c1d', marginBottom: '10px', lineHeight: 1.35,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden' }}>{recipe.title || recipe.name}</p>
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button onClick={() => {
             const recipeId = recipe._id || recipe.id;
             navigate(isEditable ? `/recipes/edit/${recipeId}` : `/recipes/${recipeId}`);
@@ -267,17 +266,18 @@ export default function Profile() {
   };
 
   const handleRemoveFavorite = async (id) => {
+    // Optimistically remove from local state first for instant feedback
+    setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id)?.toString() !== id?.toString()));
+    setUser(prev => ({
+      ...prev,
+      favorites: (prev?.favorites || []).filter(favId => favId?.toString() !== id?.toString())
+    }));
     try {
-      const res = await api.post(`/user/favorites/${id}`);
-      if (!res.data.isFavorite) {
-        setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id) !== id));
-        setUser(prev => ({
-          ...prev,
-          favorites: (prev?.favorites || []).filter(favId => favId !== id)
-        }));
-      }
+      await api.post(`/user/favorites/${id}`);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to remove favorite:', err);
+      // Re-fetch to restore correct state on error
+      fetchProfileData();
     }
   };
 
