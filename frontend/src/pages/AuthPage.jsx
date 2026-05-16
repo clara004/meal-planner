@@ -339,7 +339,7 @@ const handleSuccess = (user) => {
       <style>{`
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; }
         input, select { font-family: 'Plus Jakarta Sans', sans-serif; }
         input::placeholder { color: #aab0ac; }
         input:focus, select:focus { outline: none; border: 2px solid #2d6a4f !important; background: #ffffff !important; }
@@ -355,8 +355,16 @@ const handleSuccess = (user) => {
       `}</style>
 
       <main style={{ display: "flex", minHeight: "100vh", width: "100%", background: "#f8f9fa" }}>
-        <section className="auth-image-side" style={{ width: "50%", position: "relative", overflow: "hidden", background: "#0f5238", display: "flex" }}>
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4R4tCU3Bfo7lHOLaHmmTqBc4Z7mrh00MoAX_bvA6f8LtQ3CUECRzuKZppybX1j2qUDbwxIFHbEYZwjKoQEqwsUvK9NCdF9JNLo9hO_YbOMW7tIe3O95yTnPETXAuZncX2OHUfPtwjXDj5G1dEyozNxkJRAXlvGiN0r6LJ5zeE3-HvJV6wFuRSBtCrI5sTrfJEygFz5gXVQ1NMtZ96E38c2x0w7C1MAIb0QbJzA-I0gXNSRKlJiacRRGOSqD-GTdcwauhTsotTmmmE")`, backgroundSize: "cover", backgroundPosition: "center" }} />
+
+        {/* ── Image Side (FIXED: Sticky positioning prevents zoom dramatic zoom) ── */}
+        <section className="auth-image-side" style={{
+          width: "50%", position: "sticky", top: 0, height: "100vh",
+          overflow: "hidden", background: "#0f5238", display: "flex",
+        }}>
+          <div style={{
+            position: "absolute", inset: 0, backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4R4tCU3Bfo7lHOLaHmmTqBc4Z7mrh00MoAX_bvA6f8LtQ3CUECRzuKZppybX1j2qUDbwxIFHbEYZwjKoQEqwsUvK9NCdF9JNLo9hO_YbOMW7tIe3O95yTnPETXAuZncX2OHUfPtwjXDj5G1dEyozNxkJRAXlvGiN0r6LJ5zeE3-HvJV6wFuRSBtCrI5sTrfJEygFz5gXVQ1NMtZ96E38c2x0w7C1MAIb0QbJzA-I0gXNSRKlJiacRRGOSqD-GTdcwauhTsotTmmmE")`,
+            backgroundSize: "cover", backgroundPosition: "center",
+          }} />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(15,82,56,0.85) 0%, transparent 60%)" }} />
           <div style={{ position: "relative", zIndex: 10, padding: "80px", display: "flex", flexDirection: "column", justifyContent: "flex-end", height: "100%" }}>
             <h1 style={{ fontFamily: "Lexend", fontSize: "48px", fontWeight: 700, color: "#ffffff", lineHeight: "1.15", maxWidth: "380px", marginBottom: "16px", letterSpacing: "-0.02em" }}>
