@@ -263,10 +263,7 @@ const Stars = ({ rating, count }) => (
 const RecipeCard = ({ recipe, onClick, isFavorite, onToggleFavorite }) => (
   <div className="reveal group bg-white rounded-[2rem] overflow-hidden border border-stone-100/50 flex flex-col relative shadow-md hover:shadow-2xl transition-all duration-500">
     <div className="relative h-72 overflow-hidden">
-      {recipe.image
-        ? <img className="w-full h-full object-cover transition-transform group-hover:scale-110" src={recipe.image} alt={recipe.title} />
-        : <div className="w-full h-full bg-emerald-50 flex items-center justify-center"><span className="material-symbols-outlined text-6xl text-emerald-200">restaurant</span></div>
-      }
+      <img className="w-full h-full object-cover transition-transform group-hover:scale-110" src={recipe.image || 'https://i.pinimg.com/1200x/50/bb/19/50bb19ebe06049da09f065b743286426.jpg'} alt={recipe.title} />
       <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
     <div className="absolute top-5 left-5 z-10 flex flex-col gap-2">
       {recipe.averageRating >= 4 && (

@@ -46,7 +46,6 @@ function App() {
               <CreateRecipe />
             </ProtectedRoute>
           } />
-          <Route path="/CreateRecipe" element={<Navigate to="/recipes/create" replace />} />
           <Route path="/create-recipe" element={<Navigate to="/recipes/create" replace />} />
           <Route path="/recipes/:id" element={<RecipeDetail />} />
           <Route path="/dashboard" element={
