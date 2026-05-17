@@ -8,7 +8,6 @@ import { useFavorites } from '../context/FavoritesContext';
 const ALL_PREFS = ['Vegan', 'Gluten-Free', 'Keto', 'Paleo', 'High-Protein', 'Dairy-Free', 'Nut-Free'];
 
 // Normalize a free-text pref to its canonical ALL_PREFS form (case-insensitive).
-// Returns the canonical version if matched, otherwise returns the original string trimmed.
 function normalizePref(raw) {
   const trimmed = raw.trim();
   const match = ALL_PREFS.find(p => p.toLowerCase() === trimmed.toLowerCase());
@@ -17,7 +16,6 @@ function normalizePref(raw) {
 
 function normalizePrefsArray(arr) {
   if (!arr || !Array.isArray(arr)) return [];
-  // Normalize & deduplicate
   const seen = new Set();
   const result = [];
   for (const p of arr) {
@@ -179,7 +177,7 @@ export default function Profile() {
   const [stats, setStats]         = useState({ recipesCreated: 0, mealsPlanned: 0, recipesRated: 0 });
   const [loading, setLoading]     = useState(true);
   const [editMode, setEditMode]   = useState(false);
-  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'recipes' | 'favorites' | 'plans'
+  const [activeTab, setActiveTab] = useState('info'); 
   const [recipes, setRecipes]     = useState([]);
   const [favoriteRecipes, setFavoriteRecipes] = useState([]);
   const [mealPlans, setMealPlans] = useState([]);
@@ -285,9 +283,7 @@ export default function Profile() {
 
     setRemovingFavoriteIds(prev => new Set([...prev, idStr]));
     try {
-      // Goes through context — updates shared state so Recipes page heart syncs instantly
       await removeFavorite(idStr);
-      // Remove from this page's local favoriteRecipes list
       setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id)?.toString() !== idStr));
     } catch (err) {
       console.error('Failed to remove favorite:', err);
@@ -376,8 +372,6 @@ export default function Profile() {
           color: #191c1d;
         }
         input:focus { outline: none; border: 2px solid #2d6a4f !important; background: white !important; }
-        .pf-nav-link { font-family:'Plus Jakarta Sans'; font-size:14px; font-weight:600; color:#64748b; text-decoration:none; transition:color 0.15s; }
-        .pf-nav-link:hover { color:#2d6a4f; }
         .pf-stat-card:hover { box-shadow: 0 6px 20px rgba(45,106,79,0.1); transform: translateY(-1px); }
         .pf-stat-card { transition: all 0.15s; }
         .pf-pref-chip { transition: all 0.15s; cursor: pointer; }
@@ -394,54 +388,11 @@ export default function Profile() {
         }
       `}</style>
 
-      {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          {/* Logo - Click to go Home */}
-          <div 
-            onClick={() => navigate('/')} 
-            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
-          >
-            Vitality Kitchen
-          </div>
-          
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            {/* Recipes Nav Link */}
-            <button 
-              onClick={() => navigate('/recipes')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Recipes
-            </button>
-            <button 
-              onClick={() => navigate('/meal-planner')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Meal Planner
-            </button>
-            <button 
-              onClick={() => navigate('/grocery')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Grocery List
-            </button>
-          </div>
+      {/* HEADER REMOVED - MANAGED BY APP.JS */}
 
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
-              <span className="material-symbols-outlined text-sm">person</span>
-              Profile
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      {/* ── Main ── */}
       <main className={`reveal ${pageLoaded ? 'active' : ''}`} style={{ paddingTop: '96px', paddingBottom: '80px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
 
-          {/* Saved banner */}
           {savedMsg && (
             <div style={{ background: '#E1F5EE', border: '1px solid #1D9E75', borderRadius: '10px',
               padding: '12px 18px', marginBottom: '24px', display: 'flex',
@@ -454,13 +405,11 @@ export default function Profile() {
 
           <div className="pf-layout" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
 
-            {/* ── Left Sidebar ── */}
             <aside className="pf-sidebar" style={{ width: '300px', flexShrink: 0 }}>
               <div style={{ background: 'white', borderRadius: '20px', padding: '32px',
                 boxShadow: '0 4px 20px rgba(45,106,79,0.06)', display: 'flex',
                 flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
 
-                {/* Avatar */}
                 <div style={{ position: 'relative', marginBottom: '20px' }}>
                   <div style={{ width: '120px', height: '120px', borderRadius: '50%',
                     border: '4px solid #2d6a4f', padding: '3px', boxShadow: '0 4px 16px rgba(45,106,79,0.2)' }}>
@@ -488,7 +437,6 @@ export default function Profile() {
                   Member since {user?.memberSince}
                 </span>
 
-                {/* Stats */}
                 <div style={{ width: '100%', display: 'flex', flexDirection: 'column',
                   gap: '10px', marginBottom: '24px' }}>
                   {[
@@ -530,13 +478,12 @@ export default function Profile() {
                   Logout
                 </button>
 
-                {/* Delete Account */}
                 {showDeleteConfirm ? (
                   <div style={{ marginTop: '12px', width: '100%', background: '#ffdad6', padding: '12px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#93000a', fontWeight: 600, margin: 0 }}>Are you sure? This will permanently delete your account and all saved recipes.</p>
+                    <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#93000a', fontWeight: 600, margin: 0 }}>Are you sure? This will permanently delete your account.</p>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={handleDeleteAccount} style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Yes, Delete</button>
-                      <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '8px', background: 'transparent', color: '#93000a', border: '1px solid #ba1a1a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Cancel</button>
+                      <button onClick={handleDeleteAccount} style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Yes</button>
+                      <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '8px', background: 'transparent', color: '#93000a', border: '1px solid #ba1a1a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>No</button>
                     </div>
                   </div>
                 ) : (
@@ -553,10 +500,8 @@ export default function Profile() {
               </div>
             </aside>
 
-            {/* ── Right Column ── */}
             <section style={{ flexGrow: 1, minWidth: 0 }}>
 
-              {/* Tabs */}
               <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #e1e3e4',
                 marginBottom: '24px' }}>
                 {[['info','My Info'],['recipes','My Recipes'],['favorites','Favorites'],['plans','My Plans']].map(([key, label]) => (
@@ -575,13 +520,11 @@ export default function Profile() {
                 ))}
               </div>
 
-              {/* ── MY INFO TAB ── */}
               {activeTab === 'info' && (
                 <div style={{ background: 'white', borderRadius: '20px', padding: '28px',
                   boxShadow: '0 4px 20px rgba(45,106,79,0.06)' }}>
 
                   {editMode ? (
-                    /* ── Edit Mode ── */
                     <form onSubmit={formik.handleSubmit}>
                       <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
                         color: '#0f5238', marginBottom: '24px' }}>Edit Personal Details</h3>
@@ -593,7 +536,6 @@ export default function Profile() {
                         <Field id="calorieGoal" label="Daily Calorie Goal" icon="local_fire_department" formik={formik} type="number" suffix="kcal" />
                       </div>
 
-                      {/* Dietary prefs */}
                       <div style={{ marginBottom: '24px', paddingTop: '20px',
                         borderTop: '1px solid #f3f4f5' }}>
                         <h4 style={{ fontFamily: 'Lexend', fontSize: '15px', fontWeight: 700,
@@ -616,28 +558,9 @@ export default function Profile() {
                               </button>
                             );
                           })}
-                          {/* Show any custom prefs not in ALL_PREFS so the user can remove them */}
-                          {selectedPrefs
-                            .filter(p => !ALL_PREFS.map(a => a.toLowerCase()).includes(p.toLowerCase()))
-                            .map(pref => (
-                              <button key={pref} type="button" onClick={() => togglePref(pref)}
-                                className="pf-pref-chip"
-                                style={{ padding: '7px 16px', borderRadius: '9999px',
-                                  border: '1.5px solid #2d6a4f',
-                                  background: '#b1f0ce', color: '#0f5238',
-                                  fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                                  display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span className="material-symbols-outlined"
-                                  style={{ fontSize: '14px' }}>check</span>
-                                {pref}
-                                <span className="material-symbols-outlined"
-                                  style={{ fontSize: '14px', marginLeft: '2px' }}>close</span>
-                              </button>
-                            ))}
                         </div>
                       </div>
 
-                      {/* Action buttons */}
                       <div style={{ display: 'flex', gap: '12px', paddingTop: '20px',
                         borderTop: '1px solid #f3f4f5' }}>
                         <button type="submit"
@@ -657,9 +580,7 @@ export default function Profile() {
                         </button>
                       </div>
                     </form>
-
                   ) : (
-                    /* ── View Mode ── */
                     <>
                       <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
                         color: '#0f5238', marginBottom: '24px' }}>Personal Details</h3>
@@ -687,7 +608,6 @@ export default function Profile() {
                         ))}
                       </div>
 
-                      {/* Dietary prefs */}
                       <div style={{ paddingTop: '20px', borderTop: '1px solid #f3f4f5',
                         marginBottom: '28px' }}>
                         <h4 style={{ fontFamily: 'Lexend', fontSize: '15px', fontWeight: 700,
@@ -703,14 +623,9 @@ export default function Profile() {
                               {pref}
                             </span>
                           ))}
-                          {(user?.dietary_prefs || []).length === 0 && (
-                            <span style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px',
-                              color: '#707973', fontStyle: 'italic' }}>No preferences set</span>
-                          )}
                         </div>
                       </div>
 
-                      {/* Macro distribution */}
                       <div style={{ paddingTop: '20px', borderTop: '1px solid #f3f4f5' }}>
                         <h4 style={{ fontFamily: 'Lexend', fontSize: '15px', fontWeight: 700,
                           color: '#0f5238', marginBottom: '16px' }}>Macro Distribution</h4>
@@ -767,52 +682,28 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    /* Empty state */
                     <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px',
                       boxShadow: '0 4px 20px rgba(45,106,79,0.06)',
                       display: 'flex', flexDirection: 'column', alignItems: 'center',
                       textAlign: 'center', gap: '16px' }}>
-                      <div style={{ width: '80px', height: '80px', background: '#f0faf5',
-                        borderRadius: '50%', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center' }}>
-                        <span className="material-symbols-outlined"
-                          style={{ fontSize: '40px', color: '#2d6a4f' }}>menu_book</span>
-                      </div>
-                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
-                        color: '#191c1d' }}>You haven't created any recipes yet</h4>
-                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px',
-                        color: '#707973', maxWidth: '320px', lineHeight: 1.6 }}>
-                        Share your favourite meals with the Vitality Kitchen community.
-                      </p>
+                      <span className="material-symbols-outlined" style={{ fontSize: '40px', color: '#2d6a4f' }}>menu_book</span>
+                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700 }}>No recipes yet</h4>
                       <button onClick={() => navigate('/recipes/create')}
-                        style={{ marginTop: '8px', padding: '12px 28px', background: '#0f5238',
-                          color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                          fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-                        Create Your First Recipe
+                        style={{ padding: '12px 28px', background: '#0f5238', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>
+                        Create First Recipe
                       </button>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* ── FAVORITES TAB ── */}
               {activeTab === 'favorites' && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between',
                     alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
                       color: '#0f5238' }}>Favorites ({favoriteRecipes.length})</h3>
-                    <button onClick={() => navigate('/recipes')}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '10px 20px', background: '#0f5238', color: 'white',
-                        border: 'none', borderRadius: '10px', cursor: 'pointer',
-                        fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                        boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
-                      Browse Recipes
-                    </button>
                   </div>
 
                   {favoriteRecipes.length > 0 ? (
@@ -830,90 +721,35 @@ export default function Profile() {
                       ))}
                     </div>
                   ) : (
-                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px',
-                      boxShadow: '0 4px 20px rgba(45,106,79,0.06)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      textAlign: 'center', gap: '16px' }}>
-                      <div style={{ width: '80px', height: '80px', background: '#f0faf5',
-                        borderRadius: '50%', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center' }}>
-                        <span className="material-symbols-outlined"
-                          style={{ fontSize: '40px', color: '#2d6a4f', fontVariationSettings: '"FILL" 1' }}>favorite</span>
-                      </div>
-                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
-                        color: '#191c1d' }}>No favorite recipes yet</h4>
-                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px',
-                        color: '#707973', maxWidth: '320px', lineHeight: 1.6 }}>
-                        Tap the heart on any recipe to keep it here for later.
-                      </p>
-                      <button onClick={() => navigate('/recipes')}
-                        style={{ marginTop: '8px', padding: '12px 28px', background: '#0f5238',
-                          color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                          fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restaurant</span>
-                        Find Recipes
-                      </button>
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px', textAlign: 'center' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '40px', color: '#2d6a4f' }}>favorite</span>
+                      <p>No favorites yet.</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ── MY PLANS TAB ── */}
+              {/* ── PLANS TAB ── */}
               {activeTab === 'plans' && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between',
                     alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
                       color: '#0f5238' }}>My Weekly Plans ({mealPlans.length})</h3>
-                    <button onClick={() => navigate('/meal-planner')}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                        padding: '10px 20px', background: '#0f5238', color: 'white',
-                        border: 'none', borderRadius: '10px', cursor: 'pointer',
-                        fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                        boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
-                        New Plan
-                    </button>
                   </div>
 
                   {mealPlans.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                       {mealPlans.map(plan => {
                         const startDate = new Date(plan.startDate);
-                        const endDate = new Date(startDate);
-                        endDate.setDate(endDate.getDate() + 6);
-                        
-                        // Count meals in this specific plan
-                        let mealsCount = 0;
-                        if (plan.week) {
-                          ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].forEach(day => {
-                            if (plan.week[day]) {
-                              ['Breakfast','Lunch','Dinner'].forEach(slot => {
-                                if (plan.week[day][slot]) mealsCount++;
-                              });
-                            }
-                          });
-                        }
-
                         return (
                           <div key={plan._id} style={{ background: 'white', borderRadius: '16px', padding: '20px',
-                            boxShadow: '0 4px 20px rgba(45,106,79,0.07)', border: '1px solid #ecfdf5',
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            boxShadow: '0 4px 20px rgba(45,106,79,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
-                              <p style={{ fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700, color: '#191c1d', marginBottom: '4px' }}>
-                                Week of {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </p>
-                              <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', color: '#707973' }}>
-                                {mealsCount} {mealsCount === 1 ? 'meal' : 'meals'} planned
-                              </p>
+                              <p style={{ fontWeight: 700 }}>Week of {startDate.toLocaleDateString()}</p>
                             </div>
                             <button onClick={() => navigate(`/meal-planner?startDate=${plan.startDate}`)}
-                              style={{ padding: '8px 20px', background: '#f0faf5', color: '#0f5238',
-                                border: 'none', borderRadius: '10px', cursor: 'pointer',
-                                fontFamily: 'Plus Jakarta Sans', fontSize: '13px', fontWeight: 700,
-                                transition: 'all 0.15s' }}>
+                              style={{ padding: '8px 20px', background: '#f0faf5', color: '#0f5238', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 700 }}>
                               View Plan
                             </button>
                           </div>
@@ -921,31 +757,8 @@ export default function Profile() {
                       })}
                     </div>
                   ) : (
-                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px',
-                      boxShadow: '0 4px 20px rgba(45,106,79,0.06)',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      textAlign: 'center', gap: '16px' }}>
-                      <div style={{ width: '80px', height: '80px', background: '#f0faf5',
-                        borderRadius: '50%', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center' }}>
-                        <span className="material-symbols-outlined"
-                          style={{ fontSize: '40px', color: '#2d6a4f' }}>calendar_month</span>
-                      </div>
-                      <h4 style={{ fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
-                        color: '#191c1d' }}>No meal plans saved</h4>
-                      <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '14px',
-                        color: '#707973', maxWidth: '320px', lineHeight: 1.6 }}>
-                        Plan your week in the meal planner and save it to see it here.
-                      </p>
-                      <button onClick={() => navigate('/meal-planner')}
-                        style={{ marginTop: '8px', padding: '12px 28px', background: '#0f5238',
-                          color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                          fontFamily: 'Lexend', fontSize: '14px', fontWeight: 700,
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          boxShadow: '0 4px 12px rgba(15,82,56,0.2)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>calendar_add_on</span>
-                        Go to Meal Planner
-                      </button>
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '64px 32px', textAlign: 'center' }}>
+                      <p>No meal plans saved yet.</p>
                     </div>
                   )}
                 </div>
@@ -955,25 +768,6 @@ export default function Profile() {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
-        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-10">
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
-          </div>
-        </div>
-      </footer>
     </>
   );
 }

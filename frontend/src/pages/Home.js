@@ -18,23 +18,10 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="bg-[#f8f9fa] font-['Plus_Jakarta_Sans'] text-[#191c1d] selection:bg-[#0f5238]/20">
-      {/* Required CSS for Animations and Pill Buttons */}
+    <div className="bg-[#f8f9fa] font-['Plus_Jakarta_Sans'] text-[#191c1d]">
       <style>{`
-        .reveal {
-            opacity: 0;
-            transform: translateY(60px) scale(0.98);
-            transition: opacity 1.2s cubic-bezier(0.2, 1, 0.3, 1), 
-                        transform 1.2s cubic-bezier(0.2, 1, 0.3, 1);
-            will-change: transform, opacity;
-        }
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-        .pill-button {
-            border-radius: 9999px !important;
-        }
+        .reveal { opacity: 0; transform: translateY(60px) scale(0.98); transition: all 1.2s cubic-bezier(0.2, 1, 0.3, 1); will-change: transform, opacity; }
+        .reveal.active { opacity: 1; transform: translateY(0) scale(1); }
       `}</style>
 
       {/* TopAppBar */}
@@ -129,19 +116,19 @@ const Home = () => {
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Image Collage */}
-          <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] px-6 lg:px-12 py-10">
-            <div className="grid grid-cols-12 grid-rows-2 gap-6 h-[600px] lg:h-[800px]">
-              <div className="col-span-12 lg:col-span-6 row-span-2 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
-                <img alt="Grain bowl" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt9V6fBF5zlaAJF8dNO8b8lJSGAIoiU2gSsCsRn9rfZAnrMKphXBfE1YT5A0_uV0yxvkPMRjxqwW2UC1k0mqPwCS3bjyaTPaw3-PM4LGnLErVeAv4O8SRHZKjgKAYhLFSTrkivJ3MsVG1I6fDUq3PlFlO16_C3Vj2xAVNf_IJB4d1wR4d-4XuTJirZjIsbWWi8y5xp7iG2BBq5qEMYcRxaR26oVXmD1LLSaVo-OLSMrDzs0z44YBmFlC-2f4ebzJGMwt0BL5S_8QD2" />
-              </div>
-              <div className="hidden lg:block col-span-6 row-span-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
-                <img alt="Salmon dinner" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW9naO95Dx6dKqp5n61GsnIc3OMdXLhdunf_rSgdShiZ7yjSY6j5-MXzBxWwwsKyOw3nGhB8Gsbhd9ks5pwz6fxGGI2D7damVgU5ivbHkh_lbVGMBrgtRoj2_iUAo8vSro_U5e0-vldCAqeeRzUT2YTAwzj_heXfYo4anROEfKB7OSQhb5ai-E2eXRGCw1rs93ATehNcJNDRMW3s4nmpvHBvf2xB9AVxQ-O10Wl_VEntfxARd3C7l0dDYzcwClOWrfvnK-jKzchGn_" />
-              </div>
-              <div className="hidden lg:block col-span-6 row-span-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
-                <img alt="Poke bowl" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgwo9ib_V_AvDDqTMq3RiZO3kEL7LVMXhAcMpjlRmUH4SXHLWc5hQAMljxGXp-wSb93rTVz8wkrX6cSUOr5PYlXXiKCYzuOmdnfbeMUmHGKQ3km9bC4l6rwSG0CHjotIeXR0yFYnI5qCkV72gMot6fzausgwOaBr4UOrRBmEkn6whEdsMBhzAUo5YpSHncQsasHL_DRrIXLwrlMOKKTVBxM3L6y2lfrekwVMg4r4wsRq0nirJymFkuRXAE0Y_g5GRJNlMohSmnZLZ3" />
-              </div>
+        {/* Image Collage */}
+        <section className="reveal w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] px-6 lg:px-12 py-10">
+          <div className="grid grid-cols-12 grid-rows-2 gap-6 h-[600px] lg:h-[800px]">
+            <div className="col-span-12 lg:col-span-6 row-span-2 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+              <img alt="Grain bowl" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCt9V6fBF5zlaAJF8dNO8b8lJSGAIoiU2gSsCsRn9rfZAnrMKphXBfE1YT5A0_uV0yxvkPMRjxqwW2UC1k0mqPwCS3bjyaTPaw3-PM4LGnLErVeAv4O8SRHZKjgKAYhLFSTrkivJ3MsVG1I6fDUq3PlFlO16_C3Vj2xAVNf_IJB4d1wR4d-4XuTJirZjIsbWWi8y5xp7iG2BBq5qEMYcRxaR26oVXmD1LLSaVo-OLSMrDzs0z44YBmFlC-2f4ebzJGMwt0BL5S_8QD2" />
+            </div>
+            <div className="hidden lg:block col-span-6 row-span-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+              <img alt="Salmon dinner" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAW9naO95Dx6dKqp5n61GsnIc3OMdXLhdunf_rSgdShiZ7yjSY6j5-MXzBxWwwsKyOw3nGhB8Gsbhd9ks5pwz6fxGGI2D7damVgU5ivbHkh_lbVGMBrgtRoj2_iUAo8vSro_U5e0-vldCAqeeRzUT2YTAwzj_heXfYo4anROEfKB7OSQhb5ai-E2eXRGCw1rs93ATehNcJNDRMW3s4nmpvHBvf2xB9AVxQ-O10Wl_VEntfxARd3C7l0dDYzcwClOWrfvnK-jKzchGn_" />
+            </div>
+            <div className="hidden lg:block col-span-6 row-span-1 rounded-[2.5rem] overflow-hidden shadow-2xl relative group">
+              <img alt="Poke bowl" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgwo9ib_V_AvDDqTMq3RiZO3kEL7LVMXhAcMpjlRmUH4SXHLWc5hQAMljxGXp-wSb93rTVz8wkrX6cSUOr5PYlXXiKCYzuOmdnfbeMUmHGKQ3km9bC4l6rwSG0CHjotIeXR0yFYnI5qCkV72gMot6fzausgwOaBr4UOrRBmEkn6whEdsMBhzAUo5YpSHncQsasHL_DRrIXLwrlMOKKTVBxM3L6y2lfrekwVMg4r4wsRq0nirJymFkuRXAE0Y_g5GRJNlMohSmnZLZ3" />
             </div>
           </div>
         </section>
@@ -172,7 +159,6 @@ const Home = () => {
             <h2 className="font-['Lexend'] text-4xl md:text-[64px] font-[800] text-[#064e3b] leading-[1.1] tracking-tighter">What Our Community Says</h2>
             <div className="w-24 h-1.5 bg-[#fd9d1a] mx-auto rounded-full"></div>
           </div>
-
           <div className="flex flex-col gap-8">
             {[
               { name: 'Sarah Jenkins', initial: 'SJ', text: "Vitality Kitchen made macro tracking so effortless. I've finally reached my weight goals without feeling restricted for even a single day. The recipes are genuinely restaurant-quality!", color: 'bg-[#b1f0ce]' },
@@ -200,7 +186,7 @@ const Home = () => {
         <section className="max-w-7xl mx-auto px-6 pb-32 reveal">
           <div className="relative bg-[#2d6a4f] rounded-[3rem] p-16 md:p-24 overflow-hidden shadow-2xl text-center space-y-10">
             <h2 className="font-['Lexend'] text-3xl md:text-[64px] font-[800] text-white leading-[1.1] tracking-tighter">Ready to transform your relationship with food?</h2>
-            <button onClick={() => navigate('/login')} className="pill-button px-14 py-5 bg-white text-[#0f5238] font-[800] text-xl shadow-2xl hover:scale-105 transition-all">
+            <button onClick={() => navigate('/login')} className="rounded-full px-14 py-5 bg-white text-[#0f5238] font-[800] text-xl shadow-2xl hover:scale-105 transition-all border-none cursor-pointer">
               Get Started For Free
             </button>
           </div>

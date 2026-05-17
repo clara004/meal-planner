@@ -10,10 +10,10 @@ const Recipes = () => {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All Recipes");
+  const [fallingItems, setFallingItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [fallingItems, setFallingItems] = useState([]);
 
   const handleCreateClick = () => {
     const veggieImages = [
@@ -21,10 +21,7 @@ const Recipes = () => {
       "https://img.icons8.com/plasticine/200/carrot.png",
       "https://img.icons8.com/plasticine/200/broccoli.png",
       "https://img.icons8.com/plasticine/200/avocado.png",
-      "https://img.icons8.com/plasticine/200/bell-pepper.png",
-      "https://img.icons8.com/plasticine/200/onion.png",
-      "https://img.icons8.com/plasticine/200/corn.png",
-      "https://img.icons8.com/plasticine/200/chili-pepper.png"
+      "https://img.icons8.com/plasticine/200/bell-pepper.png"
     ];
     const newItems = Array.from({ length: 12 }).map(() => ({
       id: Math.random(),
@@ -68,6 +65,7 @@ const Recipes = () => {
       (recipe.dietaryTags && recipe.dietaryTags.includes(activeCategory));
     return matchesSearch && matchesCategory;
   });
+
   const totalPages = Math.max(1, Math.ceil(filteredRecipes.length / RECIPES_PER_PAGE));
   const pageStart = (currentPage - 1) * RECIPES_PER_PAGE;
   const paginatedRecipes = filteredRecipes.slice(pageStart, pageStart + RECIPES_PER_PAGE);
@@ -98,7 +96,7 @@ const Recipes = () => {
   }, [paginatedRecipes]);
 
   return (
-    <div className="flex flex-col min-h-screen font-['Plus_Jakarta_Sans'] text-[#191c1d] selection:bg-[#0f5238]/20">
+    <div className="flex flex-col min-h-screen font-['Plus_Jakarta_Sans'] text-[#191c1d]">
       <style>{`
         .reveal { opacity: 0; transform: translateY(40px) scale(0.98); transition: all 0.8s ease-out; }
         .reveal.active { opacity: 1; transform: translateY(0) scale(1); }
@@ -135,32 +133,9 @@ const Recipes = () => {
         </button>
       </div>
 
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          <div onClick={() => navigate('/')} className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer">Vitality Kitchen</div>
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            <button onClick={() => navigate('/recipes')} className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent">Recipes</button>
-            <button onClick={() => navigate('/meal-planner')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Planner</button>
-            <button onClick={() => navigate('/grocery')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
-          </div>
-          <div className="flex items-center gap-6">
-            {localStorage.getItem('token') ? (
-              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
-                <span className="material-symbols-outlined text-sm">person</span>
-                Profile
-              </button>
-            ) : (
-              <>
-                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
+      {/* HEADER IS GONE FROM HERE - APP.JS HANDLES IT */}
 
-      <main className="flex-grow pt-32 pb-24 px-6 max-w-7xl mx-auto w-full">
+      <main className="flex-grow pt-10 pb-24 px-6 max-w-7xl mx-auto w-full">
         <section className="mb-16 reveal">
           <div className="max-w-3xl space-y-4 mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-[#0f5238]/10 text-[#0f5238] font-bold text-[10px] tracking-widest uppercase">Chef-Curated Collection</div>
@@ -170,7 +145,6 @@ const Recipes = () => {
             <p className="text-[18px] text-stone-600">Fresh ingredients, calculated macros, zero compromise.</p>
           </div>
 
-          {/* Search Bar - Moved from Header */}
           <div className="relative w-full max-w-md mb-10 group">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-[#0f5238] transition-colors">search</span>
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -223,28 +197,12 @@ const Recipes = () => {
         )}
       </main>
 
-            <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
-        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-10">
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
-          </div>
-        </div>
-      </footer>
+      {/* FOOTER IS GONE FROM HERE - APP.JS HANDLES IT */}
     </div>
   );
 };
 
+// ... (Rest of the Stars and RecipeCard components stay the same)
 const Stars = ({ rating, count }) => (
   <div className="flex items-center gap-1.5">
     <div className="flex gap-0.5">
