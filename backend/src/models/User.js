@@ -1,35 +1,37 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true
+    required: true,
   },
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
   calorie_goal: {
     type: Number,
-    default: 2000
+    default: 2000,
   },
   dietary_prefs: {
     type: [String],
-    default: []
+    default: [],
   },
-  favorites: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Recipe'
-  }],
+  favorites: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Recipe",
+    },
+  ],
   avatar: {
     type: String,
-    default: null
-  }
+    default: null,
+  },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
