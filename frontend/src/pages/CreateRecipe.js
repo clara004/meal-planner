@@ -35,9 +35,10 @@ const buildImageDataUrl = (img, maxSide, quality) => {
 const emptyRecipeForm = {
   title: '',
   category: '',
+  cuisine: '',
   cookTime: '',
   servings: '',
-  ingredients: [{ name: '', calories: '' }],
+  ingredients: [{ name: '', quantity: '', unit: '', calories: '' }],
   instructions: '',
   dietaryTags: [],
 };
@@ -115,11 +116,17 @@ const CreateRecipe = () => {
     validationSchema: Yup.object({
       title: Yup.string().required('Title is required'),
       category: Yup.string().required('Category is required'),
+      cuisine: Yup.string().required('Cuisine is required'),
       instructions: Yup.string().required('Instructions are required'),
       servings: Yup.number().min(1).required('Servings is required'),
       ingredients: Yup.array()
         .of(Yup.object({
           name: Yup.string().required('Ingredient name is required'),
+          quantity: Yup.number()
+            .typeError('Quantity must be a number')
+            .min(0, 'Quantity cannot be negative')
+            .required('Qty is required'),
+          unit: Yup.string().required('Unit is required'),
           calories: Yup.number()
             .typeError('Kcal must be a number')
             .min(0, 'Kcal cannot be negative')
@@ -133,6 +140,7 @@ const CreateRecipe = () => {
         const payload = {
           title: values.title,
           category: values.category,
+          cuisine: values.cuisine,
           prepTime: Number(values.cookTime) || 0,
           servings: Number(values.servings) || 1,
           dietaryTags: values.dietaryTags,
@@ -143,6 +151,8 @@ const CreateRecipe = () => {
             .filter(ingredient => ingredient.name.trim())
             .map(ingredient => ({
               name: ingredient.name.trim(),
+              quantity: Number(ingredient.quantity) || 0,
+              unit: ingredient.unit.trim(),
               calories: Number(ingredient.calories) || 0,
             })),
           image: imageData || '',
@@ -186,13 +196,16 @@ const CreateRecipe = () => {
         const ingredients = recipe.ingredients?.length
           ? recipe.ingredients.map(ingredient => ({
               name: ingredient.name || '',
+              quantity: ingredient.quantity ?? '',
+              unit: ingredient.unit || '',
               calories: ingredient.calories ?? '',
             }))
-          : [{ name: '', calories: '' }];
+          : [{ name: '', quantity: '', unit: '', calories: '' }];
 
         setValues({
           title: recipe.title || '',
           category: recipe.category || '',
+          cuisine: recipe.cuisine || '',
           cookTime: recipe.prepTime ?? recipe.cookTime ?? '',
           servings: recipe.servings ?? '',
           ingredients,
@@ -223,7 +236,7 @@ const CreateRecipe = () => {
   const addIngredient = () => {
     formik.setFieldValue('ingredients', [
       ...formik.values.ingredients,
-      { name: '', calories: '' },
+      { name: '', quantity: '', unit: '', calories: '' },
     ]);
   };
 
@@ -231,7 +244,7 @@ const CreateRecipe = () => {
     const nextIngredients = formik.values.ingredients.filter((_, i) => i !== index);
     formik.setFieldValue(
       'ingredients',
-      nextIngredients.length ? nextIngredients : [{ name: '', calories: '' }]
+      nextIngredients.length ? nextIngredients : [{ name: '', quantity: '', unit: '', calories: '' }]
     );
   };
 
@@ -261,34 +274,7 @@ const CreateRecipe = () => {
             style={{ left: `${item.left}%`, width: `${item.size}px`, animationDuration: `${item.duration}s`, animationDelay: `${item.delay}s` }} />
         ))}
 
-        <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-          <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-            <div onClick={() => navigate('/')} className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer">
-              Vitality Kitchen
-            </div>
 
-            <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-              <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-              <button onClick={() => navigate('/recipes')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Recipes</button>
-              <button onClick={() => navigate('/meal-planner')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Meal Planner</button>
-              <button onClick={() => navigate('/grocery')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Grocery List</button>
-            </div>
-
-            <div className="flex items-center gap-6">
-              {localStorage.getItem('token') ? (
-                <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
-                  <span className="material-symbols-outlined text-sm">person</span>
-                  Profile
-                </button>
-              ) : (
-                <>
-                  <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-                  <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
-                </>
-              )}
-            </div>
-          </nav>
-        </header>
 
         <main className="pt-20">
           <div className="relative h-[380px] w-full overflow-hidden">
@@ -344,17 +330,37 @@ const CreateRecipe = () => {
                       {formik.touched.title && formik.errors.title && <p className="text-red-500 text-xs mt-2 ml-4">{formik.errors.title}</p>}
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-[800] text-stone-400 uppercase tracking-[0.2em] mb-3">Category *</label>
-                      <select name="category" value={formik.values.category} onChange={formik.handleChange} onBlur={formik.handleBlur}
-                        className="w-full px-8 py-5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] text-lg font-medium bg-white appearance-none cursor-pointer">
-                        <option value="" disabled>Select category</option>
-                        <option value="Breakfast">Breakfast</option>
-                        <option value="Lunch">Lunch</option>
-                        <option value="Dinner">Dinner</option>
-                        <option value="Snack">Snack</option>
-                      </select>
-                      {formik.touched.category && formik.errors.category && <p className="text-red-500 text-xs mt-2 ml-4">{formik.errors.category}</p>}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-[11px] font-[800] text-stone-400 uppercase tracking-[0.2em] mb-3">Category *</label>
+                        <select name="category" value={formik.values.category} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                          className="w-full px-8 py-5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] text-lg font-medium bg-white appearance-none cursor-pointer">
+                          <option value="" disabled>Select category</option>
+                          <option value="Breakfast">Breakfast</option>
+                          <option value="Lunch">Lunch</option>
+                          <option value="Dinner">Dinner</option>
+                          <option value="Snack">Snack</option>
+                        </select>
+                        {formik.touched.category && formik.errors.category && <p className="text-red-500 text-xs mt-2 ml-4">{formik.errors.category}</p>}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-[800] text-stone-400 uppercase tracking-[0.2em] mb-3">Cuisine *</label>
+                        <select name="cuisine" value={formik.values.cuisine} onChange={formik.handleChange} onBlur={formik.handleBlur}
+                          className="w-full px-8 py-5 rounded-full border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] text-lg font-medium bg-white appearance-none cursor-pointer">
+                          <option value="" disabled>Select cuisine</option>
+                          <option value="American">American</option>
+                          <option value="Asian">Asian</option>
+                          <option value="Mediterranean">Mediterranean</option>
+                          <option value="Mexican">Mexican</option>
+                          <option value="Italian">Italian</option>
+                          <option value="Indian">Indian</option>
+                          <option value="Middle Eastern">Middle Eastern</option>
+                          <option value="French">French</option>
+                          <option value="General">General</option>
+                        </select>
+                        {formik.touched.cuisine && formik.errors.cuisine && <p className="text-red-500 text-xs mt-2 ml-4">{formik.errors.cuisine}</p>}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
@@ -374,7 +380,7 @@ const CreateRecipe = () => {
                     <div>
                       <label className="block text-[11px] font-[800] text-stone-400 uppercase tracking-[0.2em] mb-3">Dietary Tags</label>
                       <div className="flex flex-wrap gap-3 mt-2">
-                        {["Vegetarian", "Vegan", "Gluten-Free", "Keto"].map(tag => (
+                        {["Vegetarian", "Vegan", "Gluten-Free", "Keto", "Paleo", "High-Protein", "Dairy-Free", "Nut-Free", "Low-Carb"].map(tag => (
                           <label key={tag} className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full shadow-sm hover:bg-emerald-50 transition-all">
                             <input
                               type="checkbox"
@@ -416,7 +422,7 @@ const CreateRecipe = () => {
                       const caloriesError = formik.touched.ingredients?.[index]?.calories && formik.errors.ingredients?.[index]?.calories;
 
                       return (
-                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_160px_44px] gap-3 items-start">
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-[1fr_100px_100px_120px_44px] gap-3 items-start">
                           <div>
                             <label className="sr-only" htmlFor={`ingredients.${index}.name`}>Ingredient name</label>
                             <input
@@ -426,13 +432,47 @@ const CreateRecipe = () => {
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
                               className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
-                              placeholder="Ingredient name"
+                              placeholder="Ingredient"
                             />
                             {nameError && <p className="text-red-500 text-xs mt-2 ml-3">{nameError}</p>}
                           </div>
 
                           <div>
-                            <label className="sr-only" htmlFor={`ingredients.${index}.calories`}>Ingredient kcal</label>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.quantity`}>Qty</label>
+                            <input
+                              id={`ingredients.${index}.quantity`}
+                              name={`ingredients.${index}.quantity`}
+                              type="number"
+                              min="0"
+                              value={ingredient.quantity}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="Qty"
+                            />
+                            {formik.touched.ingredients?.[index]?.quantity && formik.errors.ingredients?.[index]?.quantity && (
+                              <p className="text-red-500 text-[10px] mt-1 ml-2">{formik.errors.ingredients[index].quantity}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.unit`}>Unit</label>
+                            <input
+                              id={`ingredients.${index}.unit`}
+                              name={`ingredients.${index}.unit`}
+                              value={ingredient.unit}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              placeholder="Unit (g, ml...)"
+                            />
+                            {formik.touched.ingredients?.[index]?.unit && formik.errors.ingredients?.[index]?.unit && (
+                              <p className="text-red-500 text-[10px] mt-1 ml-2">{formik.errors.ingredients[index].unit}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="sr-only" htmlFor={`ingredients.${index}.calories`}>kcal</label>
                             <input
                               id={`ingredients.${index}.calories`}
                               name={`ingredients.${index}.calories`}
@@ -441,10 +481,10 @@ const CreateRecipe = () => {
                               value={ingredient.calories}
                               onChange={formik.handleChange}
                               onBlur={formik.handleBlur}
-                              className="w-full px-6 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
+                              className="w-full px-4 py-4 rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-[#0f5238] font-medium"
                               placeholder="kcal"
                             />
-                            {caloriesError && <p className="text-red-500 text-xs mt-2 ml-3">{caloriesError}</p>}
+                            {caloriesError && <p className="text-red-500 text-[10px] mt-1 ml-2">{caloriesError}</p>}
                           </div>
 
                           <button
@@ -497,24 +537,7 @@ const CreateRecipe = () => {
           </div>
         </main>
 
-              <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
-        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-10">
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
-          </div>
-        </div>
-      </footer>
+
       </div>
     </FormikProvider>
   );

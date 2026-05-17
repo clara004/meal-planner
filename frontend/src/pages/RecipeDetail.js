@@ -57,52 +57,7 @@ const RecipeDetail = () => {
         .step-number-pill { border-radius: 9999px; }
       `}</style>
 
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          <div 
-            onClick={() => navigate('/')} 
-            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
-          >
-            Vitality Kitchen
-          </div>
-          
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            <button 
-              onClick={() => navigate('/recipes')} 
-              className="text-[#0f5238] font-bold border-b-2 border-[#0f5238] pb-1 bg-transparent"
-            >
-              Recipes
-            </button>
-            <button 
-              onClick={() => navigate('/meal-planner')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Meal Planner
-            </button>
-            <button 
-              onClick={() => navigate('/grocery')} 
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Grocery List
-            </button>
-          </div>
 
-          <div className="flex items-center gap-6">
-            {localStorage.getItem('token') ? (
-              <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
-                <span className="material-symbols-outlined text-sm">person</span>
-                Profile
-              </button>
-            ) : (
-              <>
-                <button onClick={() => navigate('/login')} className="text-stone-600 font-bold text-sm">Login</button>
-                <button onClick={() => navigate('/login')} className="bg-[#0f5238] text-white px-8 py-3 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all" style={{ borderRadius: '9999px' }}>Get Started</button>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
 
       <main className={`reveal ${pageLoaded ? 'active' : ''} pt-24 pb-20 max-w-[1280px] mx-auto px-6`}>
         <button onClick={() => navigate('/recipes')}
@@ -193,7 +148,10 @@ const RecipeDetail = () => {
               {recipe.ingredients?.map((ing, i) => (
                 <label key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-transparent hover:border-[#0f5238]/20 transition-all cursor-pointer">
                   <input type="checkbox" className="w-5 h-5 rounded text-[#0f5238]" />
-                  <span className="text-gray-700">{ing.name}</span>
+                  <span className="text-gray-700 font-medium">
+                    {ing.quantity && ing.quantity > 0 ? `${ing.quantity} ${ing.unit || ''} ` : ''}
+                    {ing.name}
+                  </span>
                 </label>
               ))}
             </div>

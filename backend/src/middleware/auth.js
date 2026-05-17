@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-
+//Making tokens and send it with the front end in each request
 const authMiddleware = (req, res, next) => {
     const authHeader = req.headers.authorization;
 

@@ -14,20 +14,30 @@ router.get('/profile', authMiddleware, async (req, res) => {
     // Aggregate stats
     const recipesCreated = await Recipe.countDocuments({ user: req.user.id });
 
-    // Count meals currently planned
-    const plan = await MealPlan.findOne({ user: req.user.id });
+    // Count meals currently planned across all plans
+    const plans = await MealPlan.find({ user: req.user.id }).sort({ startDate: -1 });
     let mealsPlanned = 0;
-    if (plan && plan.week) {
-      const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-      const slots = ['Breakfast','Lunch','Dinner'];
-      days.forEach(day => {
-        if (plan.week[day]) {
-          slots.forEach(slot => {
-            if (plan.week[day][slot]) mealsPlanned++;
-          });
-        }
-      });
-    }
+    const days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+    const slots = ['Breakfast','Lunch','Dinner'];
+    const activePlans = [];
+    plans.forEach(plan => {
+      let planMealCount = 0;
+      if (plan.week) {
+        days.forEach(day => {
+          if (plan.week[day]) {
+            slots.forEach(slot => {
+              if (plan.week[day][slot]) {
+                mealsPlanned++;
+                planMealCount++;
+              }
+            });
+          }
+        });
+      }
+      if (planMealCount > 0) {
+        activePlans.push(plan);
+      }
+    });
 
     // Count recipes this user has rated
     const recipesRated = await Recipe.countDocuments({ 'ratings.user': req.user.id });
@@ -47,7 +57,8 @@ router.get('/profile', authMiddleware, async (req, res) => {
         recipesCreated,
         mealsPlanned,
         recipesRated,
-      }
+      },
+      mealPlans: activePlans
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -103,7 +114,7 @@ router.put('/profile/avatar', authMiddleware, async (req, res) => {
   }
 });
 
-// POST /user/favorites/:recipeId — toggle favorite
+// POST /user/favorites/:recipeId — toggle favorite (add only path)
 router.post('/favorites/:recipeId', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -124,6 +135,26 @@ router.post('/favorites/:recipeId', authMiddleware, async (req, res) => {
       await user.save();
       res.json({ message: 'Added to favorites', favorites: user.favorites.map(id => id.toString()), isFavorite: true });
     }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /user/favorites/:recipeId — unconditionally remove from favorites
+router.delete('/favorites/:recipeId', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const recipeId = req.params.recipeId;
+    const before = user.favorites.length;
+    user.favorites = user.favorites.filter(id => id.toString() !== recipeId);
+
+    if (user.favorites.length !== before) {
+      await user.save();
+    }
+
+    res.json({ message: 'Removed from favorites', favorites: user.favorites.map(id => id.toString()), isFavorite: false });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
