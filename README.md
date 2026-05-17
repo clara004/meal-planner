@@ -245,3 +245,4 @@ npm test
 
 ## Credits
 Designed and developed as a modern, coding project utilizing the MERN stack by students at Ain Shams University - Faculty of Computer and Information Science 2026. Icons provided by Google Material Symbols and images sourced via Unsplash.
+

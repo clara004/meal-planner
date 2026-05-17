@@ -240,6 +240,8 @@ export default function Profile() {
       }
 
       setUser(u);
+      localStorage.setItem('user', JSON.stringify(u));
+      window.dispatchEvent(new Event('userUpdated'));
       setSelectedPrefs(normalizePrefsArray(u.dietary_prefs));
       setStats(profileRes.data.stats);
       setRecipes(recipesRes.data.recipes || []);
@@ -272,7 +274,12 @@ export default function Profile() {
           dietary_prefs: selectedPrefs
         };
         const res = await api.put('/user/profile', payload);
-        setUser(prev => ({ ...prev, ...res.data.user }));
+        setUser(prev => {
+          const updated = { ...prev, ...res.data.user };
+          localStorage.setItem('user', JSON.stringify(updated));
+          window.dispatchEvent(new Event('userUpdated'));
+          return updated;
+        });
         setEditMode(false);
         setSavedMsg(true);
         setTimeout(() => setSavedMsg(false), 2500);
@@ -310,9 +317,7 @@ export default function Profile() {
 
     setRemovingFavoriteIds(prev => new Set([...prev, idStr]));
     try {
-      // Goes through context — updates shared state so Recipes page heart syncs instantly
       await removeFavorite(idStr);
-      // Remove from this page's local favoriteRecipes list
       setFavoriteRecipes(prev => prev.filter(r => (r._id || r.id)?.toString() !== idStr));
     } catch (err) {
       console.error('Failed to remove favorite:', err);
@@ -353,7 +358,12 @@ export default function Profile() {
             const base64Avatar = canvas.toDataURL('image/jpeg', 0.8);
 
             const res = await api.put('/user/profile/avatar', { avatar: base64Avatar });
-            setUser(prev => ({ ...prev, avatar: res.data.avatar }));
+            setUser(prev => {
+              const updated = { ...prev, avatar: res.data.avatar };
+              localStorage.setItem('user', JSON.stringify(updated));
+              window.dispatchEvent(new Event('userUpdated'));
+              return updated;
+            });
           };
         } catch (err) {
           console.error(err);
@@ -401,8 +411,6 @@ export default function Profile() {
           color: #191c1d;
         }
         input:focus { outline: none; border: 2px solid #2d6a4f !important; background: white !important; }
-        .pf-nav-link { font-family:'Plus Jakarta Sans'; font-size:14px; font-weight:600; color:#64748b; text-decoration:none; transition:color 0.15s; }
-        .pf-nav-link:hover { color:#2d6a4f; }
         .pf-stat-card:hover { box-shadow: 0 6px 20px rgba(45,106,79,0.1); transform: translateY(-1px); }
         .pf-stat-card { transition: all 0.15s; }
         .pf-pref-chip { transition: all 0.15s; cursor: pointer; }
@@ -419,54 +427,11 @@ export default function Profile() {
         }
       `}</style>
 
-      {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-xl border-b border-stone-100/50 shadow-sm">
-        <nav className="flex justify-between items-center max-w-7xl mx-auto px-6 py-5">
-          {/* Logo - Click to go Home */}
-          <div
-            onClick={() => navigate('/')}
-            className="text-[24px] font-[800] tracking-tight text-[#064e3b] font-['Lexend'] cursor-pointer"
-          >
-            Vitality Kitchen
-          </div>
+      {/* HEADER REMOVED - MANAGED BY APP.JS */}
 
-          <div className="hidden md:flex items-center gap-10 font-['Lexend'] text-[14px] tracking-wide">
-            <button onClick={() => navigate('/')} className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent">Home</button>
-            {/* Recipes Nav Link */}
-            <button
-              onClick={() => navigate('/recipes')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Recipes
-            </button>
-            <button
-              onClick={() => navigate('/meal-planner')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Meal Planner
-            </button>
-            <button
-              onClick={() => navigate('/grocery')}
-              className="text-stone-500 font-medium hover:text-[#0f5238] transition-all bg-transparent"
-            >
-              Grocery List
-            </button>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/profile')} className="bg-[#0f5238] text-white px-6 py-2.5 pill-button font-bold text-sm shadow-lg hover:bg-[#064e3b] transition-all flex items-center gap-2" style={{ borderRadius: '9999px' }}>
-              <span className="material-symbols-outlined text-sm">person</span>
-              Profile
-            </button>
-          </div>
-        </nav>
-      </header>
-
-      {/* ── Main ── */}
       <main className={`reveal ${pageLoaded ? 'active' : ''}`} style={{ paddingTop: '96px', paddingBottom: '80px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 32px' }}>
 
-          {/* Saved banner */}
           {savedMsg && (
             <div style={{
               background: '#E1F5EE', border: '1px solid #1D9E75', borderRadius: '10px',
@@ -481,7 +446,6 @@ export default function Profile() {
 
           <div className="pf-layout" style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
 
-            {/* ── Left Sidebar ── */}
             <aside className="pf-sidebar" style={{ width: '300px', flexShrink: 0 }}>
               <div style={{
                 background: 'white', borderRadius: '20px', padding: '32px',
@@ -489,7 +453,6 @@ export default function Profile() {
                 flexDirection: 'column', alignItems: 'center', textAlign: 'center'
               }}>
 
-                {/* Avatar */}
                 <div style={{ position: 'relative', marginBottom: '20px' }}>
                   <div style={{
                     width: '120px', height: '120px', borderRadius: '50%',
@@ -527,7 +490,6 @@ export default function Profile() {
                   Member since {user?.memberSince}
                 </span>
 
-                {/* Stats */}
                 <div style={{
                   width: '100%', display: 'flex', flexDirection: 'column',
                   gap: '10px', marginBottom: '24px'
@@ -581,13 +543,12 @@ export default function Profile() {
                   Logout
                 </button>
 
-                {/* Delete Account */}
                 {showDeleteConfirm ? (
                   <div style={{ marginTop: '12px', width: '100%', background: '#ffdad6', padding: '12px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#93000a', fontWeight: 600, margin: 0 }}>Are you sure? This will permanently delete your account and all saved recipes.</p>
+                    <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '12px', color: '#93000a', fontWeight: 600, margin: 0 }}>Are you sure? This will permanently delete your account.</p>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={handleDeleteAccount} style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Yes, Delete</button>
-                      <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '8px', background: 'transparent', color: '#93000a', border: '1px solid #ba1a1a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Cancel</button>
+                      <button onClick={handleDeleteAccount} style={{ flex: 1, padding: '8px', background: '#ba1a1a', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>Yes</button>
+                      <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: '8px', background: 'transparent', color: '#93000a', border: '1px solid #ba1a1a', borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lexend', fontSize: '12px', fontWeight: 700 }}>No</button>
                     </div>
                   </div>
                 ) : (
@@ -606,7 +567,6 @@ export default function Profile() {
               </div>
             </aside>
 
-            {/* ── Right Column ── */}
             <section style={{ flexGrow: 1, minWidth: 0 }}>
 
               {/* Tabs */}
@@ -632,7 +592,6 @@ export default function Profile() {
                 ))}
               </div>
 
-              {/* ── MY INFO TAB ── */}
               {activeTab === 'info' && (
                 <div style={{
                   background: 'white', borderRadius: '20px', padding: '28px',
@@ -640,7 +599,6 @@ export default function Profile() {
                 }}>
 
                   {editMode ? (
-                    /* ── Edit Mode ── */
                     <form onSubmit={formik.handleSubmit}>
                       <h3 style={{
                         fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
@@ -734,9 +692,7 @@ export default function Profile() {
                         </button>
                       </div>
                     </form>
-
                   ) : (
-                    /* ── View Mode ── */
                     <>
                       <h3 style={{
                         fontFamily: 'Lexend', fontSize: '18px', fontWeight: 700,
@@ -805,7 +761,6 @@ export default function Profile() {
                         </div>
                       </div>
 
-                      {/* Macro distribution */}
                       <div style={{ paddingTop: '20px', borderTop: '1px solid #f3f4f5' }}>
                         <h4 style={{
                           fontFamily: 'Lexend', fontSize: '15px', fontWeight: 700,
@@ -923,6 +878,7 @@ export default function Profile() {
                 </div>
               )}
 
+              {/* ── FAVORITES TAB ── */}
               {activeTab === 'favorites' && (
                 <div>
                   <div style={{
@@ -1001,7 +957,7 @@ export default function Profile() {
                 </div>
               )}
 
-              {/* ── MY PLANS TAB ── */}
+              {/* ── PLANS TAB ── */}
               {activeTab === 'plans' && (
                 <div>
                   <div style={{
@@ -1051,12 +1007,7 @@ export default function Profile() {
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                           }}>
                             <div>
-                              <p style={{ fontFamily: 'Lexend', fontSize: '16px', fontWeight: 700, color: '#191c1d', marginBottom: '4px' }}>
-                                Week of {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              </p>
-                              <p style={{ fontFamily: 'Plus Jakarta Sans', fontSize: '13px', color: '#707973' }}>
-                                {mealsCount} {mealsCount === 1 ? 'meal' : 'meals'} planned
-                              </p>
+                              <p style={{ fontWeight: 700 }}>Week of {startDate.toLocaleDateString()}</p>
                             </div>
                             <button onClick={() => navigate(`/meal-planner?startDate=${plan.startDate}`)}
                               style={{
@@ -1116,25 +1067,6 @@ export default function Profile() {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm">
-        <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="flex flex-col items-center md:items-start gap-6">
-            <div onClick={() => navigate('/')} className="text-2xl font-[800] text-[#064e3b] cursor-pointer">Vitality Kitchen</div>
-            <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed">Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.</p>
-          </div>
-          <div className="flex flex-wrap justify-center gap-10">
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">About Us</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Privacy Policy</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Terms of Service</button>
-            <button className="text-stone-600 font-medium hover:text-[#0f5238] bg-transparent">Contact</button>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">share</span></div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-[#0f5238] cursor-pointer hover:bg-[#0f5238] hover:text-white transition-all"><span className="material-symbols-outlined">mail</span></div>
-          </div>
-        </div>
-      </footer>
     </>
   );
 }
