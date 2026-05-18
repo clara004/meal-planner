@@ -1,13 +1,16 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../middleware/auth');
-const Recipe = require('../models/Recipe');
+const authMiddleware = require("../middleware/auth");
+const Recipe = require("../models/Recipe");
 
 // 🔧 helper function (reuse logic)
 const calculateNutrition = (ingredients, servings) => {
-  let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
+  let totalCalories = 0,
+    totalProtein = 0,
+    totalCarbs = 0,
+    totalFat = 0;
 
-  ingredients.forEach(ing => {
+  ingredients.forEach((ing) => {
     totalCalories += ing.calories || 0;
     totalProtein += ing.protein || 0;
     totalCarbs += ing.carbs || 0;
@@ -19,26 +22,24 @@ const calculateNutrition = (ingredients, servings) => {
       calories: totalCalories,
       protein: totalProtein,
       carbs: totalCarbs,
-      fat: totalFat
+      fat: totalFat,
     },
     perServing: {
       calories: servings ? totalCalories / servings : 0,
       protein: servings ? totalProtein / servings : 0,
       carbs: servings ? totalCarbs / servings : 0,
-      fat: servings ? totalFat / servings : 0
-    }
+      fat: servings ? totalFat / servings : 0,
+    },
   };
 };
 
-
-
 // ✅ Create Recipe
-router.post('/', authMiddleware, async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const { ingredients = [], servings } = req.body;
     const cleanIngredients = ingredients
-      .filter(ing => ing && String(ing.name || '').trim())
-      .map(ing => ({
+      .filter((ing) => ing && String(ing.name || "").trim())
+      .map((ing) => ({
         ...ing,
         name: String(ing.name).trim(),
         calories: Number(ing.calories) || 0,
@@ -54,31 +55,30 @@ router.post('/', authMiddleware, async (req, res) => {
       ingredients: cleanIngredients,
       user: req.user.id,
       isUserCreated: true,
-      ...nutrition
+      ...nutrition,
     });
 
     await recipe.save();
 
-    res.status(201).json({ message: 'Recipe created', recipe });
-
+    res.status(201).json({ message: "Recipe created", recipe });
   } catch (err) {
-    console.error('Failed to create recipe:', err);
-    const status = err.name === 'ValidationError' ? 400 : 500;
-    res.status(status).json({ message: err.message || 'Failed to create recipe' });
+    console.error("Failed to create recipe:", err);
+    const status = err.name === "ValidationError" ? 400 : 500;
+    res
+      .status(status)
+      .json({ message: err.message || "Failed to create recipe" });
   }
 });
 
-
-
 // ✅ Get all recipes (with search & filter)
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { search, cuisine, maxCalories } = req.query;
 
     let query = {};
 
     if (search) {
-      query.title = { $regex: search, $options: 'i' };
+      query.title = { $regex: search, $options: "i" };
     }
 
     if (cuisine) {
@@ -86,100 +86,98 @@ router.get('/', async (req, res) => {
     }
 
     if (maxCalories) {
-      query['perServing.calories'] = { $lte: Number(maxCalories) };
+      query["perServing.calories"] = { $lte: Number(maxCalories) };
     }
 
     const recipes = await Recipe.find(query);
 
     res.json({ recipes });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-
 // ✅ Get my recipes
-router.get('/my-recipes', authMiddleware, async (req, res) => {
+router.get("/my-recipes", authMiddleware, async (req, res) => {
   try {
-    const recipes = await Recipe.find({ user: req.user.id, isUserCreated: { $ne: false } });
+    const recipes = await Recipe.find({
+      user: req.user.id,
+      isUserCreated: { $ne: false },
+    });
     res.json({ recipes });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-
 // ✅ Get single recipe
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
-      return res.status(404).json({ message: 'Recipe not found' });
+      return res.status(404).json({ message: "Recipe not found" });
     }
 
     res.json({ recipe });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-
 // ✅ Update recipe (recalculate nutrition)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
-      return res.status(404).json({ message: 'Recipe not found' });
+      return res.status(404).json({ message: "Recipe not found" });
     }
 
-    if (recipe.isUserCreated === false || recipe.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (
+      recipe.isUserCreated === false ||
+      recipe.user.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const { ingredients, servings } = req.body;
 
     if (ingredients) {
-      const nutrition = calculateNutrition(ingredients, servings || recipe.servings);
+      const nutrition = calculateNutrition(
+        ingredients,
+        servings || recipe.servings,
+      );
       Object.assign(req.body, nutrition);
     }
 
-    const updated = await Recipe.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updated = await Recipe.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
-    res.json({ message: 'Recipe updated', recipe: updated });
-
+    res.json({ message: "Recipe updated", recipe: updated });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-
 // ✅ Rate recipe
-router.post('/:id/rate', authMiddleware, async (req, res) => {
+router.post("/:id/rate", authMiddleware, async (req, res) => {
   try {
     const { rating } = req.body;
     if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      return res
+        .status(400)
+        .json({ message: "Rating must be between 1 and 5" });
     }
 
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
-      return res.status(404).json({ message: 'Recipe not found' });
+      return res.status(404).json({ message: "Recipe not found" });
     }
 
     const existingRatingIndex = recipe.ratings.findIndex(
-      r => r.user.toString() === req.user.id
+      (r) => r.user.toString() === req.user.id,
     );
 
     if (existingRatingIndex >= 0) {
@@ -194,32 +192,31 @@ router.post('/:id/rate', authMiddleware, async (req, res) => {
 
     await recipe.save();
 
-    res.json({ message: 'Rating saved successfully', recipe });
+    res.json({ message: "Rating saved successfully", recipe });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-
-
-
 // ✅ Delete recipe
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
 
     if (!recipe) {
-      return res.status(404).json({ message: 'Recipe not found' });
+      return res.status(404).json({ message: "Recipe not found" });
     }
 
-    if (recipe.isUserCreated === false || recipe.user.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (
+      recipe.isUserCreated === false ||
+      recipe.user.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     await Recipe.findByIdAndDelete(req.params.id);
 
-    res.json({ message: 'Recipe deleted' });
-
+    res.json({ message: "Recipe deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

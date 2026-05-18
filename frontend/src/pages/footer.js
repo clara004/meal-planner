@@ -9,8 +9,8 @@ const Footer = () => {
 
   const footerButtonStyle = (path) => `
     px-5 py-2 rounded-full transition-all duration-300 border-none cursor-pointer flex items-center justify-center
-    ${isActive(path) 
-      ? 'bg-[#f0fdf4] text-[#0f5238] font-bold shadow-sm' 
+    ${isActive(path)
+      ? 'bg-[#f0fdf4] text-[#0f5238] font-bold shadow-sm'
       : 'text-stone-600 font-medium bg-transparent hover:bg-[#f0fdf4]/50'}
     hover:-translate-y-1 hover:shadow-md hover:text-[#0f5238]
   `;
@@ -18,13 +18,13 @@ const Footer = () => {
   return (
     <footer className="w-full border-t border-stone-100 bg-white font-['Lexend'] text-sm py-16">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-10">
-        
+
         <div className="flex flex-col items-center md:items-start gap-4">
           <div onClick={() => navigate('/')} className="text-[26px] font-[800] text-[#064e3b] tracking-tight cursor-pointer hover:scale-105 transition-transform">
             Vitality Kitchen
           </div>
           <p className="text-stone-500 max-w-xs text-center md:text-left leading-relaxed font-['Plus_Jakarta_Sans']">
-            Nourishing your journey with science, taste, and absolute joy. © 2024 Vitality Kitchen.
+            Nourishing your journey with science, taste, and absolute joy. © 2026 Vitality Kitchen.
           </p>
         </div>
 
