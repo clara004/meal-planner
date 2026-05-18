@@ -36,6 +36,14 @@ This project adheres to standard JavaScript conventions with an emphasis on func
 * **Dietary Preferences**: Set personal dietary goals (e.g., Vegan, Keto) that are saved to your user profile.
 * **Dashboard/Profile**: Track personal statistics like recipes created, meals planned, and recipes rated.
 
+### Screenshots
+
+<img width="1919" height="871" alt="image" src="https://github.com/user-attachments/assets/afb80e3a-dee2-40f6-a5ae-fea6b3d3023d" />
+<img width="1919" height="867" alt="image" src="https://github.com/user-attachments/assets/6e1c5de0-555c-48a7-b7a6-4f38d3757d3a" />
+<img width="1919" height="870" alt="image" src="https://github.com/user-attachments/assets/d40993d7-9b1b-4937-b043-cb458acc176b" />
+<img width="1919" height="865" alt="image" src="https://github.com/user-attachments/assets/f15c633a-9a71-435c-b411-f09f03e769ac" />
+<img width="1919" height="866" alt="image" src="https://github.com/user-attachments/assets/a887b67d-ab02-4df1-8d14-171f4cea119f" />
+
 ## Code Example
 Here is a quick look at how the application handles robust recipe creation with nested arrays (ingredients):
 
