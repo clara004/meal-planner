@@ -57,6 +57,13 @@ const payload = {
 };
 ```
 
+## Screenshots
+
+<img width="1919" height="868" alt="image" src="https://github.com/user-attachments/assets/1e83c789-17ea-4655-81e0-737905385f7d" />
+<img width="1919" height="870" alt="image" src="https://github.com/user-attachments/assets/59b3214e-1e8d-4819-8806-d9dfd1a66f9e" />
+<img width="1919" height="866" alt="image" src="https://github.com/user-attachments/assets/7397017b-4197-4054-abf3-1bd379938d31" />
+<img width="1919" height="866" alt="image" src="https://github.com/user-attachments/assets/1f548d84-3f41-46b4-8159-9a6296225a8d" />
+
 ## Installation
 Ensure you have Node.js and MongoDB installed on your system.
 
