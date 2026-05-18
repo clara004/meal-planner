@@ -2,19 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { FavoritesProvider } from './context/FavoritesContext';
 
-// Global Components
 import Header from './pages/header';
 import Footer from './pages/footer';
-// Page Components
 import Home from './pages/Home';
 import About from './pages/about';
 import AuthPage from './pages/AuthPage';
-import Recipes from './pages/Recipes'; 
+import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
-import CreateRecipe from './pages/CreateRecipe'; 
+import CreateRecipe from './pages/CreateRecipe';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
-import ContactUs from './pages/ContactUs'; 
+import ContactUs from './pages/ContactUs';
 import Profile from './pages/Profile';
 import GroceryList from "./pages/GroceryList";
 import Dashboard from './pages/Dashboard';
@@ -31,20 +29,17 @@ function HomeOrDashboard() {
   return token ? <Dashboard /> : <Home />;
 }
 
-// 1. Create a wrapper component to handle the conditional logic
 function AppContent() {
   const location = useLocation();
-  
-  // Define which paths should NOT have header and footer
+
   const isAuthPage = location.pathname === '/login';
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8f9fa]">
-      {/* 2. Only show Header if we are NOT on the auth page */}
-      {!isAuthPage && <Header />} 
+      {!isAuthPage && <Header />}
 
       <main className="flex-grow">
-        <Routes>    
+        <Routes>
           <Route path="/about" element={<About />} />
           <Route path="/login" element={<AuthPage />} />
           <Route path="/recipes" element={<Recipes />} />
@@ -79,13 +74,11 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* 3. Only show Footer if we are NOT on the auth page */}
-      {!isAuthPage && <Footer />} 
+      {!isAuthPage && <Footer />}
     </div>
   );
 }
 
-// The main App component now just provides the Router and Favorites context
 function App() {
   return (
     <FavoritesProvider>

@@ -347,7 +347,7 @@ export default function MealPlanner() {
           name: r.title,
           kcal: r.perServing?.calories || 0,
           cuisine: r.cuisine || 'General',
-          img: r.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop',
+          img: r.image || 'https://i.pinimg.com/1200x/50/bb/19/50bb19ebe06049da09f065b743286426.jpg',
           time: r.prepTime ? `${r.prepTime} min` : '15 min',
           rating: r.averageRating || 0
         }));
@@ -377,7 +377,7 @@ export default function MealPlanner() {
                 name: recipeData.title,
                 kcal: recipeData.perServing?.calories || 0,
                 cuisine: recipeData.cuisine || 'General',
-                img: recipeData.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1000&auto=format&fit=crop',
+                img: recipeData.image || 'https://i.pinimg.com/1200x/50/bb/19/50bb19ebe06049da09f065b743286426.jpg',
                 time: recipeData.prepTime ? `${recipeData.prepTime} min` : '15 min',
                 rating: recipeData.averageRating || 0
               };
