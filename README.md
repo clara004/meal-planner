@@ -36,7 +36,7 @@ This project adheres to standard JavaScript conventions with an emphasis on func
 * **Dietary Preferences**: Set personal dietary goals (e.g., Vegan, Keto) that are saved to your user profile.
 * **Dashboard/Profile**: Track personal statistics like recipes created, meals planned, and recipes rated.
 
-### Screenshots
+## Screenshots
 
 <img width="1919" height="871" alt="image" src="https://github.com/user-attachments/assets/afb80e3a-dee2-40f6-a5ae-fea6b3d3023d" />
 <img width="1919" height="867" alt="image" src="https://github.com/user-attachments/assets/6e1c5de0-555c-48a7-b7a6-4f38d3757d3a" />
